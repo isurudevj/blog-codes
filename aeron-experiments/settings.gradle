@@ -1,0 +1,8 @@
+rootProject.name = 'aeron-experiments'
+
+include 'media-driver'
+include 'pricing-engine'
+include 'pricing-client'
+include 'monitoring-service'
+include 'docker-stacks'
+include 'sbe-files'

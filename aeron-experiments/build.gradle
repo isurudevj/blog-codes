@@ -1,0 +1,26 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'com.busyspin'
+    version = '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    pluginManager.withPlugin('java') {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(17)
+            }
+        }
+
+        tasks.named('test') {
+            useJUnitPlatform()
+        }
+    }
+}
