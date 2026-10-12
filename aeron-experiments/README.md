@@ -5,6 +5,7 @@ Multi-module Gradle project for Aeron experiments and monitoring examples.
 ## Modules
 
 - `media-driver` - Media Driver application and monitoring experiments
+- `common-lib` - Shared library for pricing and monitoring applications
 - `pricing-engine` - Pricing publisher/engine application
 - `pricing-client` - Pricing consumer/client application
 - `monitoring-service` - Aeron metrics collection and monitoring service

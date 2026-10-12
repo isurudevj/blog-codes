@@ -2,6 +2,10 @@ plugins {
     id 'application'
 }
 
+dependencies {
+    implementation project(':common-lib')
+}
+
 application {
     mainClass = 'io.github.aeron_experiments.monitoring.MonitoringServiceApplication'
 }
