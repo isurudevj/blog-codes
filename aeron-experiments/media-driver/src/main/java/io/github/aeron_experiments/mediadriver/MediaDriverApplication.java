@@ -2,15 +2,13 @@ package io.github.aeron_experiments.mediadriver;
 
 import io.aeron.driver.MediaDriver;
 import io.github.aeron_experiments.common.EnvInitializer;
+import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.agrona.SystemUtil.loadPropertiesFiles;
 
+@Slf4j
 public final class MediaDriverApplication {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MediaDriverApplication.class);
-
     private MediaDriverApplication() {
     }
 
@@ -26,9 +24,9 @@ public final class MediaDriverApplication {
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
             MediaDriver driver = MediaDriver.launch(context.terminationHook(barrier::signalAll))) {
-            LOGGER.info("High-performance Aeron Media Driver started in {}", driver.aeronDirectoryName());
+            log.info("High-performance Aeron Media Driver started in {}", driver.aeronDirectoryName());
             barrier.await();
-            LOGGER.info("Shutting down Aeron Media Driver");
+            log.info("Shutting down Aeron Media Driver");
         }
     }
 }
