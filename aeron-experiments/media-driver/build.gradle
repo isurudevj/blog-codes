@@ -11,8 +11,7 @@ dependencies {
 application {
     mainClass = 'io.github.aeron_experiments.mediadriver.MediaDriverApplication'
     applicationDefaultJvmArgs = [
-        '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
-        '--add-opens=java.base/java.util.zip=ALL-UNNAMED'
+        '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
     ]
 }
 
@@ -22,7 +21,7 @@ tasks.named('jar') {
     manifest {
         attributes(
             'Main-Class': application.mainClass.get(),
-            'Add-Opens': 'java.base/jdk.internal.misc java.base/java.util.zip'
+            'Add-Opens': 'java.base/jdk.internal.misc'
         )
     }
 
