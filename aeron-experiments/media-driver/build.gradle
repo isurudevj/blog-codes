@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation project(':common-lib')
     implementation "io.aeron:aeron-driver:${aeronVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
@@ -16,6 +17,7 @@ application {
 }
 
 tasks.named('jar') {
+    dependsOn configurations.runtimeClasspath
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {

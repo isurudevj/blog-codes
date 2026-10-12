@@ -1,9 +1,7 @@
 package io.github.aeron_experiments.mediadriver;
 
 import io.aeron.driver.MediaDriver;
-import io.aeron.driver.ThreadingMode;
-import org.agrona.concurrent.BusySpinIdleStrategy;
-import org.agrona.concurrent.NoOpIdleStrategy;
+import io.github.aeron_experiments.common.EnvInitializer;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +20,9 @@ public final class MediaDriverApplication {
         // are used by the Context constructor and can tune deployment-specific
         // settings such as the Aeron directory, MTU, socket buffers, and BDP.
         loadPropertiesFiles(args);
+        EnvInitializer.init();
 
-        final MediaDriver.Context context = new MediaDriver.Context()
-            .termBufferSparseFile(false)
-            .useWindowsHighResTimer(true)
-            .threadingMode(ThreadingMode.DEDICATED)
-            .conductorIdleStrategy(BusySpinIdleStrategy.INSTANCE)
-            .receiverIdleStrategy(NoOpIdleStrategy.INSTANCE)
-            .senderIdleStrategy(NoOpIdleStrategy.INSTANCE);
+        final MediaDriver.Context context = new MediaDriver.Context();
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
             MediaDriver driver = MediaDriver.launch(context.terminationHook(barrier::signalAll))) {

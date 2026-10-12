@@ -45,10 +45,22 @@ During development, the application can also be run with:
 ## High-performance Media Driver
 
 The `media-driver` application runs Aeron's Java Media Driver using its
-low-latency configuration: dedicated conductor, sender, and receiver threads;
-a busy-spin conductor; non-idling network agents; and preallocated (non-sparse)
-term buffers. It intentionally consumes three CPU cores continuously. Do not run
-it on a host without at least three cores available exclusively to the driver.
+configuration properties. To select the low-latency profile, provide these
+environment variables:
+
+```shell
+export AERON_TERM_BUFFER_SPARSE_FILE=false
+export AERON_USE_WINDOWS_HIGH_RES_TIMER=true
+export AERON_THREADING_MODE=DEDICATED
+export AERON_CONDUCTOR_IDLE_STRATEGY=spin
+export AERON_RECEIVER_IDLE_STRATEGY=noop
+export AERON_SENDER_IDLE_STRATEGY=noop
+```
+
+This profile uses dedicated conductor, sender, and receiver threads; a busy-spin
+conductor; non-idling network agents; and preallocated (non-sparse) term buffers.
+It intentionally consumes three CPU cores continuously. Do not use it on a host
+without at least three cores available exclusively to the driver.
 
 Build and run the self-contained JAR:
 
