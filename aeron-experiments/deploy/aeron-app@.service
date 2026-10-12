@@ -1,0 +1,18 @@
+[Unit]
+Description=Aeron application instance %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/apps
+EnvironmentFile=/opt/apps/deploy/env_files/%i.env
+ExecStart=/opt/apps/deploy/launch-service.sh %i
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
