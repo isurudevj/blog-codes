@@ -1,4 +1,4 @@
-package com.busyspin.aeronexperiments.pricingclient;
+package io.github.aeron_experiments.pricingclient;
 
 public final class PricingClientApplication {
     private PricingClientApplication() {

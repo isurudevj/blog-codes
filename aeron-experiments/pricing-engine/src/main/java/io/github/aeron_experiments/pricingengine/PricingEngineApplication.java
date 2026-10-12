@@ -1,4 +1,4 @@
-package com.busyspin.aeronexperiments.pricingengine;
+package io.github.aeron_experiments.pricingengine;
 
 public final class PricingEngineApplication {
     private PricingEngineApplication() {

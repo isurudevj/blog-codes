@@ -3,7 +3,7 @@ plugins {
 }
 
 application {
-    mainClass = 'com.busyspin.aeronexperiments.monitoring.MonitoringServiceApplication'
+    mainClass = 'io.github.aeron_experiments.monitoring.MonitoringServiceApplication'
 }
 
 tasks.named('jar') {

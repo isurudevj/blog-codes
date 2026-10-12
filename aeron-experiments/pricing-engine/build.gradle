@@ -3,7 +3,7 @@ plugins {
 }
 
 application {
-    mainClass = 'com.busyspin.aeronexperiments.pricingengine.PricingEngineApplication'
+    mainClass = 'io.github.aeron_experiments.pricingengine.PricingEngineApplication'
 }
 
 tasks.named('jar') {

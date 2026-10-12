@@ -1,4 +1,4 @@
-package com.busyspin.aeronexperiments.monitoring;
+package io.github.aeron_experiments.monitoring;
 
 public final class MonitoringServiceApplication {
     private MonitoringServiceApplication() {

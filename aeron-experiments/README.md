@@ -40,3 +40,36 @@ During development, the application can also be run with:
 ./gradlew :pricing-client:run
 ./gradlew :monitoring-service:run
 ```
+
+## High-performance Media Driver
+
+The `media-driver` application runs Aeron's Java Media Driver using its
+low-latency configuration: dedicated conductor, sender, and receiver threads;
+a busy-spin conductor; non-idling network agents; and preallocated (non-sparse)
+term buffers. It intentionally consumes three CPU cores continuously. Do not run
+it on a host without at least three cores available exclusively to the driver.
+
+Build and run the self-contained JAR:
+
+```shell
+./gradlew :media-driver:jar
+java -jar media-driver/build/libs/media-driver-1.0.0-SNAPSHOT.jar
+```
+
+Optional Aeron property files can be supplied as arguments, and individual
+settings can be overridden with JVM system properties:
+
+```shell
+java \
+  -Daeron.dir=/dev/shm/aeron \
+  -Daeron.print.configuration=true \
+  -jar media-driver/build/libs/media-driver-1.0.0-SNAPSHOT.jar \
+  /path/to/aeron.properties
+```
+
+For stable latency in production, place the Aeron directory on a memory-backed
+filesystem such as `/dev/shm` on Linux and pin the `driver-conductor`, `sender`,
+and `receiver` threads to isolated physical CPU cores. Network MTU, socket
+buffers, and term-buffer sizes must be tuned for the deployment rather than
+hard-coded because their optimal values depend on the link's bandwidth-delay
+product and message profile.

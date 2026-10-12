@@ -2,12 +2,34 @@ plugins {
     id 'application'
 }
 
+dependencies {
+    implementation "io.aeron:aeron-driver:${aeronVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
+}
+
 application {
-    mainClass = 'com.busyspin.aeronexperiments.mediadriver.MediaDriverApplication'
+    mainClass = 'io.github.aeron_experiments.mediadriver.MediaDriverApplication'
+    applicationDefaultJvmArgs = [
+        '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+        '--add-opens=java.base/java.util.zip=ALL-UNNAMED'
+    ]
 }
 
 tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     manifest {
-        attributes('Main-Class': application.mainClass.get())
+        attributes(
+            'Main-Class': application.mainClass.get(),
+            'Add-Opens': 'java.base/jdk.internal.misc java.base/java.util.zip'
+        )
     }
+
+    // Package the driver and Agrona so the documented `java -jar` command works.
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
