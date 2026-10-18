@@ -1,34 +1,25 @@
 plugins {
     id 'application'
+    id 'org.springframework.boot' version '4.1.1'
 }
 
 dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
     implementation project(':common-lib')
     implementation "io.aeron:aeron-client:${aeronVersion}"
-    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
 }
 
 application {
     mainClass = 'io.github.aeron_experiments.monitoring.MonitoringServiceApplication'
 }
 
-tasks.named('jar') {
-    dependsOn configurations.runtimeClasspath
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
+tasks.named('bootJar') {
     manifest {
-        attributes(
-            'Main-Class': application.mainClass.get(),
-            'Add-Opens': 'java.base/jdk.internal.misc'
-        )
+        attributes('Add-Opens': 'java.base/jdk.internal.misc')
     }
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }

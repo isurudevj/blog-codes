@@ -236,8 +236,8 @@ The monitoring service exposes its latest Aeron IPC snapshot in Prometheus
 text format on the Artio loopback interface:
 
 ```text
-http://127.0.0.1:9100/metrics
-http://127.0.0.1:9100/health
+http://127.0.0.1:9100/actuator/prometheus
+http://127.0.0.1:9100/actuator/health
 ```
 
 Deploy native Prometheus and Grafana binaries with:
