@@ -86,6 +86,8 @@ deployment configuration, transfers the bundle over SSH, and installs:
 /opt/apps/deploy/launch-service.sh
 /opt/apps/deploy/app.sh
 /opt/apps/deploy/env_files/*
+/opt/apps/microbenchmark/microbenchmark.sh
+/opt/apps/microbenchmark/jmh.jar
 /etc/systemd/system/aeron-app@.service
 ```
 
@@ -106,6 +108,42 @@ The deployment script also accepts `DEPLOY_APPS_DIR` and
 `DEPLOY_SYSTEMD_DIR`, but the current systemd unit and launcher expect
 `/opt/apps`. Update those files as well before deploying to another application
 directory.
+
+## Run the microbenchmark
+
+Deployment installs a self-contained executable JMH JAR and its launcher under
+`/opt/apps/microbenchmark`. Run the default order-book codec benchmarks with:
+
+```shell
+/opt/apps/microbenchmark/microbenchmark.sh
+```
+
+The default run selects `OrderBookSnapshotCodecBenchmark` and enables JMH's GC
+profiler. Arguments supplied to the script are passed directly to JMH:
+
+```shell
+/opt/apps/microbenchmark/microbenchmark.sh \
+  OrderBookSnapshotCodecBenchmark.encode \
+  -p levelCount=20 \
+  -prof gc
+```
+
+The launcher uses `-Xms2048m -Xmx2048m` by default. Override the JVM arguments
+through the environment when required:
+
+```shell
+JAVA_OPTS='-Xms4g -Xmx4g' /opt/apps/microbenchmark/microbenchmark.sh
+```
+
+To build a directory for manual copying without deploying the other
+applications:
+
+```shell
+./gradlew :common-lib:microbenchmarkDist
+scp -r common-lib/build/distributions/microbenchmark server:/tmp/
+```
+
+Install the copied directory as `/opt/apps/microbenchmark` on the server.
 
 ## Start an application
 

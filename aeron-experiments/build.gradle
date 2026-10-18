@@ -4,6 +4,9 @@ plugins {
 
 ext {
     aeronVersion = '1.51.0'
+    agronaVersion = '2.4.1'
+    jmhVersion = '1.37'
+    sbeVersion = '1.38.1'
     lombokVersion = '1.18.48'
     slf4jVersion = '2.0.20'
     logbackVersion = '1.6.4'
@@ -28,6 +31,7 @@ subprojects {
 
         tasks.named('test') {
             useJUnitPlatform()
+            jvmArgs '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
         }
     }
 }

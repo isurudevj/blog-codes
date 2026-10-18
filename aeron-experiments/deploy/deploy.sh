@@ -26,9 +26,12 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Building Aeron applications..."
-"${PROJECT_DIR}/gradlew" -p "${PROJECT_DIR}" clean build
+"${PROJECT_DIR}/gradlew" -p "${PROJECT_DIR}" clean build :common-lib:microbenchmarkDist
 
-mkdir -p "${local_stage}/bundle/apps" "${local_stage}/bundle/deploy/env_files"
+mkdir -p \
+    "${local_stage}/bundle/apps" \
+    "${local_stage}/bundle/deploy/env_files" \
+    "${local_stage}/bundle/microbenchmark"
 
 for service in "${SERVICES[@]}"; do
     source_jar="${PROJECT_DIR}/${service}/build/libs/${service}-${VERSION}.jar"
@@ -42,6 +45,10 @@ done
 
 install -m 0755 "${SCRIPT_DIR}/launch-service.sh" "${local_stage}/bundle/deploy/launch-service.sh"
 install -m 0755 "${SCRIPT_DIR}/app.sh" "${local_stage}/bundle/deploy/app.sh"
+install -m 0755 "${PROJECT_DIR}/common-lib/build/distributions/microbenchmark/microbenchmark.sh" \
+    "${local_stage}/bundle/microbenchmark/microbenchmark.sh"
+install -m 0644 "${PROJECT_DIR}/common-lib/build/distributions/microbenchmark/jmh.jar" \
+    "${local_stage}/bundle/microbenchmark/jmh.jar"
 install -m 0644 "${SCRIPT_DIR}/aeron-app@.service" "${local_stage}/bundle/deploy/aeron-app@.service"
 install -m 0644 "${SCRIPT_DIR}/env_files/cpu_affinity.csv" \
     "${local_stage}/bundle/deploy/env_files/cpu_affinity.csv"
@@ -85,10 +92,18 @@ if ! id --user aeron >/dev/null 2>&1; then
     sudo useradd --system --gid aeron --no-create-home --shell /usr/sbin/nologin aeron
 fi
 
-sudo install -d -m 0755 "${apps_dir}" "${apps_dir}/deploy" "${apps_dir}/deploy/env_files"
+sudo install -d -m 0755 \
+    "${apps_dir}" \
+    "${apps_dir}/deploy" \
+    "${apps_dir}/deploy/env_files" \
+    "${apps_dir}/microbenchmark"
 sudo install -m 0644 "${stage}/bundle/apps/"*.jar "${apps_dir}/"
 sudo install -m 0755 "${stage}/bundle/deploy/launch-service.sh" "${apps_dir}/deploy/launch-service.sh"
 sudo install -m 0755 "${stage}/bundle/deploy/app.sh" "${apps_dir}/deploy/app.sh"
+sudo install -m 0755 "${stage}/bundle/microbenchmark/microbenchmark.sh" \
+    "${apps_dir}/microbenchmark/microbenchmark.sh"
+sudo install -m 0644 "${stage}/bundle/microbenchmark/jmh.jar" \
+    "${apps_dir}/microbenchmark/jmh.jar"
 sudo install -m 0644 "${stage}/bundle/deploy/env_files/cpu_affinity.csv" \
     "${apps_dir}/deploy/env_files/cpu_affinity.csv"
 sudo install -m 0644 "${stage}/bundle/deploy/env_files/"*.env "${apps_dir}/deploy/env_files/"

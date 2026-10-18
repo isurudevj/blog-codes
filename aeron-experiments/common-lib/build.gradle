@@ -1,3 +1,109 @@
 plugins {
     id 'java-library'
 }
+
+def generatedSbeDir = layout.buildDirectory.dir('generated/sources/sbe/java')
+def marketDataSchema = project(':sbe-files').layout.projectDirectory.file('src/main/resources/market-data.xml')
+
+configurations {
+    sbeTool
+}
+
+dependencies {
+    api "org.agrona:agrona:${agronaVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    sbeTool "uk.co.real-logic:sbe-tool:${sbeVersion}"
+
+    testImplementation platform('org.junit:junit-bom:5.14.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+    main {
+        java.srcDir generatedSbeDir
+    }
+    jmh {
+        java.srcDir 'src/jmh/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    jmhImplementation.extendsFrom implementation
+    jmhRuntimeOnly.extendsFrom runtimeOnly
+}
+
+tasks.register('generateSbeCodecs', JavaExec) {
+    group = 'code generation'
+    description = 'Generates Java SBE codecs for the market data schema.'
+    inputs.file marketDataSchema
+    outputs.dir generatedSbeDir
+    classpath = configurations.sbeTool
+    mainClass = 'uk.co.real_logic.sbe.SbeTool'
+    jvmArgs '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
+    systemProperty 'sbe.output.dir', generatedSbeDir.get().asFile.absolutePath
+    systemProperty 'sbe.target.language', 'Java'
+    systemProperty 'sbe.generate.ir', 'false'
+    systemProperty 'sbe.validation.stop.on.error', 'true'
+    args marketDataSchema.asFile.absolutePath
+
+    doFirst {
+        generatedSbeDir.get().asFile.mkdirs()
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('generateSbeCodecs')
+}
+
+dependencies {
+    jmhImplementation "org.openjdk.jmh:jmh-core:${jmhVersion}"
+    jmhAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${jmhVersion}"
+}
+
+tasks.register('jmh', JavaExec) {
+    group = 'benchmark'
+    description = 'Runs the OrderBookSnapshot codec JMH benchmarks.'
+    dependsOn tasks.named('jmhClasses')
+    classpath = sourceSets.jmh.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    jvmArgs '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
+    args((findProperty('jmhArgs') ?: 'OrderBookSnapshotCodecBenchmark -prof gc').toString().split(' ') as List)
+}
+
+tasks.register('jmhJar', Jar) {
+    group = 'benchmark'
+    description = 'Builds a self-contained executable JMH benchmark JAR.'
+    dependsOn tasks.named('jmhClasses')
+    archiveFileName = 'jmh.jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes('Main-Class': 'org.openjdk.jmh.Main')
+    }
+
+    from sourceSets.main.output
+    from sourceSets.jmh.output
+    from {
+        configurations.jmhRuntimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.register('microbenchmarkDist', Sync) {
+    group = 'distribution'
+    description = 'Assembles the JMH JAR and server launcher into a copyable directory.'
+    dependsOn tasks.named('jmhJar')
+    into layout.buildDirectory.dir('distributions/microbenchmark')
+
+    from(tasks.named('jmhJar'))
+    from(rootProject.file('deploy/microbenchmark.sh')) {
+        filePermissions {
+            unix('rwxr-xr-x')
+        }
+    }
+}

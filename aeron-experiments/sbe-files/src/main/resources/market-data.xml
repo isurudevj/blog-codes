@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbe:messageSchema xmlns:sbe="http://fixprotocol.io/2016/sbe"
+                   package="io.github.aeron_experiments.codec_utils"
+                   id="1"
+                   version="0"
+                   semanticVersion="1.0.0"
+                   byteOrder="littleEndian">
+    <types>
+        <composite name="messageHeader" description="SBE message header">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="templateId" primitiveType="uint16"/>
+            <type name="schemaId" primitiveType="uint16"/>
+            <type name="version" primitiveType="uint16"/>
+        </composite>
+
+        <composite name="groupSizeEncoding" description="Repeating group dimensions">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="numInGroup" primitiveType="uint16" semanticType="NumInGroup"/>
+        </composite>
+
+        <type name="symbol"
+              primitiveType="char"
+              length="16"
+              characterEncoding="US-ASCII"
+              description="NUL-padded market symbol"/>
+        <type name="price"
+              primitiveType="int64"
+              semanticType="Price"
+              description="Price represented as a fixed-point integer"/>
+        <type name="quantity"
+              primitiveType="int64"
+              semanticType="Qty"
+              minValue="0"
+              description="Non-negative quantity in the instrument's minimum quantity unit"/>
+    </types>
+
+    <sbe:message name="OrderBookSnapshot"
+                 id="1"
+                 description="A complete two-sided order book snapshot for one symbol">
+        <field name="symbol" id="1" type="symbol"/>
+        <field name="pricePrecision"
+               id="2"
+               type="int16"
+               description="Number of implied decimal places used by every price in this snapshot"/>
+
+        <group name="orderBookLevels" id="3" dimensionType="groupSizeEncoding">
+            <field name="bidPrice" id="4" type="price"/>
+            <field name="bidQuantity" id="5" type="quantity"/>
+            <field name="askPrice" id="6" type="price"/>
+            <field name="askQuantity" id="7" type="quantity"/>
+        </group>
+    </sbe:message>
+</sbe:messageSchema>
