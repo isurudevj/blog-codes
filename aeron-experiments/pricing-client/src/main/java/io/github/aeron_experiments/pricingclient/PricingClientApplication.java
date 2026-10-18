@@ -2,6 +2,7 @@ package io.github.aeron_experiments.pricingclient;
 
 import io.aeron.Subscription;
 import io.github.aeron_experiments.common.EnvInitializer;
+import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import io.github.aeron_experiments.common_utils.AeronFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
@@ -28,7 +29,8 @@ public final class PricingClientApplication {
                 throwable -> log.error("Pricing Client agent failed", throwable),
                 null,
                 new PricingClientAgent(subscription))) {
-                AgentRunner.startOnThread(runner);
+                AgentRunner.startOnThread(
+                    runner, ThreadFactoryUtils.createDemonThreadFactory(applicationName + "-agent"));
                 log.info("Pricing Client started: appName={}, channel={}, streamId={}",
                     applicationName, channel, streamId);
                 barrier.await();
