@@ -124,6 +124,11 @@ if command -v restorecon >/dev/null 2>&1; then
     sudo restorecon -RF "${install_root}"
 fi
 
+# Grafana 13 updates bundled datasource plugins in place. The service account
+# therefore needs write access to this directory or the updater can stop the
+# Prometheus plugin without being able to install its replacement.
+sudo chown -R grafana:grafana "${install_root}/grafana-${grafana_version}/data/plugins-bundled"
+
 sudo install -d -o prometheus -g prometheus -m 0755 /etc/prometheus /var/lib/prometheus
 sudo install -m 0644 "${stage}/config/prometheus.yml" /etc/prometheus/prometheus.yml
 sudo chown -R prometheus:prometheus /var/lib/prometheus
