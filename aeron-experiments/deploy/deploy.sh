@@ -78,6 +78,13 @@ readonly systemd_dir="$3"
 mkdir -p "${stage}/bundle"
 tar -C "${stage}/bundle" -xzf "${stage}/aeron-apps.tar.gz"
 
+if ! getent group aeron >/dev/null; then
+    sudo groupadd --system aeron
+fi
+if ! id --user aeron >/dev/null 2>&1; then
+    sudo useradd --system --gid aeron --no-create-home --shell /usr/sbin/nologin aeron
+fi
+
 sudo install -d -m 0755 "${apps_dir}" "${apps_dir}/deploy" "${apps_dir}/deploy/env_files"
 sudo install -m 0644 "${stage}/bundle/apps/"*.jar "${apps_dir}/"
 sudo install -m 0755 "${stage}/bundle/deploy/launch-service.sh" "${apps_dir}/deploy/launch-service.sh"
