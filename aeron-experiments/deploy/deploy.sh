@@ -97,6 +97,7 @@ sudo install -d -m 0755 \
     "${apps_dir}/deploy" \
     "${apps_dir}/deploy/env_files" \
     "${apps_dir}/microbenchmark"
+sudo install -d -o aeron -g aeron -m 0755 "${apps_dir}/logs"
 sudo install -m 0644 "${stage}/bundle/apps/"*.jar "${apps_dir}/"
 sudo install -m 0755 "${stage}/bundle/deploy/launch-service.sh" "${apps_dir}/deploy/launch-service.sh"
 sudo install -m 0755 "${stage}/bundle/deploy/app.sh" "${apps_dir}/deploy/app.sh"

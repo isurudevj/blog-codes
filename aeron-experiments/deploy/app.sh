@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
     echo "Usage:" >&2
-    echo "  $0 <start|stop|restart|status> <service-name> <instance-id>" >&2
+    echo "  $0 <start|stop|restart|status|logs> <service-name> <instance-id>" >&2
     echo "  $0 restart-all" >&2
     exit 64
 }
@@ -47,7 +47,7 @@ readonly command="$1"
 readonly service_name="$2"
 readonly instance_id="$3"
 
-if [[ "${command}" != "start" && "${command}" != "stop" && "${command}" != "restart" && "${command}" != "status" ]]; then
+if [[ "${command}" != "start" && "${command}" != "stop" && "${command}" != "restart" && "${command}" != "status" && "${command}" != "logs" ]]; then
     echo "Unsupported command: ${command}" >&2
     usage
 fi
@@ -63,6 +63,7 @@ if [[ ! "${instance_id}" =~ ^[0-9]+$ ]]; then
 fi
 
 readonly unit_name="aeron-app@${service_name}_${instance_id}.service"
+readonly log_file="/opt/apps/logs/${service_name}-${instance_id}.log"
 
 echo "Running '${command}' for ${unit_name}..."
 case "${command}" in
@@ -81,5 +82,12 @@ case "${command}" in
         ;;
     status)
         sudo systemctl --no-pager --full status "${unit_name}"
+        ;;
+    logs)
+        if [[ ! -r "${log_file}" ]]; then
+            echo "Application log is not readable: ${log_file}" >&2
+            exit 66
+        fi
+        exec tail -n 100 -f "${log_file}"
         ;;
 esac

@@ -211,6 +211,15 @@ sudo systemctl status aeron-app@media-driver_1.service
 Follow its logs with:
 
 ```shell
+/opt/apps/deploy/app.sh logs media-driver 1
+```
+
+This displays the last 100 lines and follows
+`/opt/apps/logs/media-driver-1.log`. Logs roll at 100 MB and are retained for
+seven days, subject to a 1 GB total size cap per application instance. Console
+output remains available through `journalctl`:
+
+```shell
 sudo journalctl -u aeron-app@media-driver_1.service -f
 ```
 

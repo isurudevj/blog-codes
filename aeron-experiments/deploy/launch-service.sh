@@ -19,7 +19,9 @@ if [[ ! "${app_instance}" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*_[0-9]+$ ]]; then
 fi
 
 readonly service_name="${app_instance%_*}"
+readonly instance_id="${app_instance##*_}"
 readonly jar_file="${APPS_DIR}/${service_name}.jar"
+readonly log_file="${APPS_DIR}/logs/${service_name}-${instance_id}.log"
 readonly java_opts="${JAVA_OPTS:--Xms2048m -Xmx2048m}"
 
 if [[ ! -r "${jar_file}" ]]; then
@@ -56,5 +58,5 @@ fi
 
 read -r -a java_opts_args <<< "${java_opts}"
 
-echo "Starting ${app_instance}: jar=${jar_file}, cpu_affinity_mask=${cpu_affinity_mask}, java_opts=${java_opts}"
-exec taskset "${cpu_affinity_mask}" java "${java_opts_args[@]}" -jar "${jar_file}"
+echo "Starting ${app_instance}: jar=${jar_file}, log=${log_file}, cpu_affinity_mask=${cpu_affinity_mask}, java_opts=${java_opts}"
+exec taskset "${cpu_affinity_mask}" java "${java_opts_args[@]}" -DLOG_FILE="${log_file}" -jar "${jar_file}"
