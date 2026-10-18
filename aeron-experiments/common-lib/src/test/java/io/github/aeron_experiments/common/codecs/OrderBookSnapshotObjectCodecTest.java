@@ -20,6 +20,7 @@ class OrderBookSnapshotObjectCodecTest {
     void shouldEncodeObjectAndDecodeIntoSameTargetObject() {
         setSymbol(source, "AAPL");
         source.setPricePrecision((short)4);
+        source.setSentTimestamp(1_760_768_739_123_456_789L);
         source.setOrderBookLength(2);
         source.getBids()[0] = 1_895_000;
         source.getBidSizes()[0] = 100;
@@ -30,11 +31,12 @@ class OrderBookSnapshotObjectCodecTest {
         source.getAsks()[1] = 1_895_200;
         source.getAskSizes()[1] = 300;
 
-        assertEquals(94, codec.encode(source, buffer, 0));
+        assertEquals(102, codec.encode(source, buffer, 0));
         assertSame(target, codec.decode(buffer, 0, target));
 
         assertEquals("AAPL", new String(target.getSymbol(), 0, target.getSymbolLength()));
         assertEquals(4, target.getPricePrecision());
+        assertEquals(1_760_768_739_123_456_789L, target.getSentTimestamp());
         assertEquals(2, target.getOrderBookLength());
         assertEquals(1_895_000, target.getBids()[0]);
         assertEquals(100, target.getBidSizes()[0]);

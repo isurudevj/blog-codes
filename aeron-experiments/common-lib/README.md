@@ -31,6 +31,7 @@ Set the outbound values and encode directly into the reusable buffer:
 "AAPL".getChars(0, 4, outbound.getSymbol(), 0);
 outbound.setSymbolLength((short)4);
 outbound.setPricePrecision((short)4);
+outbound.setSentTimestamp(System.currentTimeMillis() * 1_000_000L);
 outbound.setOrderBookLength(1);
 outbound.getBids()[0] = 1_895_000;
 outbound.getBidSizes()[0] = 100;

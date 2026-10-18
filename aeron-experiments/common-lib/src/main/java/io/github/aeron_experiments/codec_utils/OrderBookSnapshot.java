@@ -8,6 +8,7 @@ public class OrderBookSnapshot {
     private char[] symbol;
     private short symbolLength;
     private short pricePrecision;
+    private long sentTimestamp;
     private long[] bids;
     private long[] asks;
     private long[] bidSizes;

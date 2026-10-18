@@ -27,6 +27,7 @@ public final class OrderBookSnapshotCodec {
         encoder.wrapAndApplyHeader(buffer, offset, headerEncoder);
         encodeSymbol(snapshot);
         encoder.pricePrecision(snapshot.getPricePrecision());
+        encoder.sentTimestamp(snapshot.getSentTimestamp());
 
         final int levelCount = snapshot.getOrderBookLength();
         final OrderBookSnapshotEncoder.OrderBookLevelsEncoder levels =
@@ -66,6 +67,7 @@ public final class OrderBookSnapshotCodec {
 
         decodeSymbol(target);
         target.setPricePrecision(decoder.pricePrecision());
+        target.setSentTimestamp(decoder.sentTimestamp());
 
         final OrderBookSnapshotDecoder.OrderBookLevelsDecoder levels = decoder.orderBookLevels();
         final int levelCount = levels.count();
@@ -125,6 +127,9 @@ public final class OrderBookSnapshotCodec {
         }
         if (snapshot.getPricePrecision() < 0) {
             throw new IllegalArgumentException("price precision cannot be negative");
+        }
+        if (snapshot.getSentTimestamp() < 0) {
+            throw new IllegalArgumentException("sent timestamp cannot be negative");
         }
         final int levelCount = snapshot.getOrderBookLength();
         if (levelCount < 0 || levelCount > 65_534) {

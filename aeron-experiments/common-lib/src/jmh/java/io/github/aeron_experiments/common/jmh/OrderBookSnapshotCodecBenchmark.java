@@ -49,6 +49,7 @@ public class OrderBookSnapshotCodecBenchmark {
         source.getSymbol()[3] = 'L';
         source.setSymbolLength((short)4);
         source.setPricePrecision((short)4);
+        source.setSentTimestamp(1_760_768_739_123_456_789L);
 
         for (int i = 0; i < MAX_LEVELS; i++) {
             source.getBids()[i] = 1_895_000L - i;

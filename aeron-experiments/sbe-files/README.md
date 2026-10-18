@@ -9,6 +9,7 @@ depth:
 OrderBookSnapshot
 ├── symbol: char[16]
 ├── pricePrecision: int16
+├── sentTimestamp: int64
 └── orderBookLevels[]
     ├── bidPrice: int64
     ├── bidQuantity: int64
@@ -26,6 +27,10 @@ at 32 bytes.
 
 The positive price range is `0.0000` through
 `922337203685477.5807` when `pricePrecision` is `4`.
+
+`sentTimestamp` records when the publisher sent the snapshot as nanoseconds
+since the Unix epoch. It is encoded once in the fixed message block rather than
+repeated for every order-book level.
 
 The fixed-length symbol is US-ASCII and NUL-padded when shorter than 16
 characters. The order-book group is ordered from best prices to worst prices,

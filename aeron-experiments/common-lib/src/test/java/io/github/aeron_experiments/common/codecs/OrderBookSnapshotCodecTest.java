@@ -27,6 +27,7 @@ class OrderBookSnapshotCodecTest {
             .wrapAndApplyHeader(buffer, 0, headerEncoder)
             .symbol("AAPL")
             .pricePrecision((short)4)
+            .sentTimestamp(1_760_768_739_123_456_789L)
             .orderBookLevelsCount(2);
 
         assertSame(levelsEncoder, levelsEncoder.next());
@@ -42,7 +43,7 @@ class OrderBookSnapshotCodecTest {
             .askPrice(1_895_200L)
             .askQuantity(300);
 
-        assertEquals(94, MessageHeaderEncoder.ENCODED_LENGTH + encoder.encodedLength());
+        assertEquals(102, MessageHeaderEncoder.ENCODED_LENGTH + encoder.encodedLength());
 
         decoder.wrapAndApplyHeader(buffer, 0, headerDecoder);
         assertEquals(0, decoder.actingVersion());
@@ -50,6 +51,7 @@ class OrderBookSnapshotCodecTest {
         assertEquals('L', decoder.symbol(3));
         assertEquals(0, decoder.symbol(4));
         assertEquals(4, decoder.pricePrecision());
+        assertEquals(1_760_768_739_123_456_789L, decoder.sentTimestamp());
 
         final OrderBookSnapshotDecoder.OrderBookLevelsDecoder levelsDecoder = decoder.orderBookLevels();
         assertEquals(2, levelsDecoder.count());
@@ -102,6 +104,7 @@ class OrderBookSnapshotCodecTest {
             .wrapAndApplyHeader(buffer, 64, headerEncoder)
             .symbol(symbol)
             .pricePrecision(precision)
+            .sentTimestamp(1_760_768_739_123_456_789L)
             .orderBookLevelsCount(1)
             .next()
             .bidPrice(bidPrice)

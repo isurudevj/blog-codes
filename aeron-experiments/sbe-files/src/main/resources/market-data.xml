@@ -32,6 +32,11 @@
               semanticType="Qty"
               minValue="0"
               description="Non-negative quantity in the instrument's minimum quantity unit"/>
+        <type name="timestamp"
+              primitiveType="int64"
+              semanticType="UTCTimestamp"
+              minValue="0"
+              description="Unix epoch timestamp in nanoseconds"/>
     </types>
 
     <sbe:message name="OrderBookSnapshot"
@@ -42,12 +47,16 @@
                id="2"
                type="int16"
                description="Number of implied decimal places used by every price in this snapshot"/>
+        <field name="sentTimestamp"
+               id="3"
+               type="timestamp"
+               description="Time at which the publisher sent this snapshot"/>
 
-        <group name="orderBookLevels" id="3" dimensionType="groupSizeEncoding">
-            <field name="bidPrice" id="4" type="price"/>
-            <field name="bidQuantity" id="5" type="quantity"/>
-            <field name="askPrice" id="6" type="price"/>
-            <field name="askQuantity" id="7" type="quantity"/>
+        <group name="orderBookLevels" id="4" dimensionType="groupSizeEncoding">
+            <field name="bidPrice" id="5" type="price"/>
+            <field name="bidQuantity" id="6" type="quantity"/>
+            <field name="askPrice" id="7" type="price"/>
+            <field name="askQuantity" id="8" type="quantity"/>
         </group>
     </sbe:message>
 </sbe:messageSchema>
