@@ -4,6 +4,11 @@ plugins {
 
 dependencies {
     implementation project(':common-lib')
+    implementation "io.aeron:aeron-client:${aeronVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
 }
 
 application {
@@ -11,7 +16,19 @@ application {
 }
 
 tasks.named('jar') {
+    dependsOn configurations.runtimeClasspath
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     manifest {
-        attributes('Main-Class': application.mainClass.get())
+        attributes(
+            'Main-Class': application.mainClass.get(),
+            'Add-Opens': 'java.base/jdk.internal.misc'
+        )
     }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }

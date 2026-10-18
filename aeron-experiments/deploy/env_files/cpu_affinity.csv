@@ -2,3 +2,4 @@ app_instance,cpu_affinity_mask
 media-driver_1,0xE
 pricing-engine_1,0x10
 pricing-client_1,0x20
+monitoring-service_1,0x40
