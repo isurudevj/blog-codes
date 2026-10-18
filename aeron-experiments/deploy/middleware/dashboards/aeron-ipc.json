@@ -108,12 +108,14 @@
   "templating": {
     "list": [
       {
-        "current": {},
+        "allValue": ".*",
+        "current": {"selected": true, "text": "All", "value": "$__all"},
         "datasource": {"type": "prometheus", "uid": "prometheus"},
         "definition": "label_values(aeron_ipc_publisher_position_bytes, stream_id)",
         "includeAll": true,
         "label": "Stream",
         "name": "stream_id",
+        "multi": true,
         "query": {"query": "label_values(aeron_ipc_publisher_position_bytes, stream_id)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
         "refresh": 1,
         "type": "query"

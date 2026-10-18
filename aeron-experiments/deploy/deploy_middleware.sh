@@ -148,6 +148,12 @@ sudo install -m 0644 "${stage}/config/grafana.service" /etc/systemd/system/grafa
 sudo systemctl daemon-reload
 sudo systemctl enable --now prometheus.service grafana.service
 sudo systemctl restart prometheus.service grafana.service
+
+if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld; then
+    sudo firewall-cmd --permanent --zone=public --add-port=3000/tcp
+    sudo firewall-cmd --reload
+fi
+
 sudo systemctl --no-pager --full status prometheus.service grafana.service
 REMOTE_SCRIPT
 
