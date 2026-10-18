@@ -51,7 +51,7 @@ agents and stop through a `ShutdownSignalBarrier`.
 Their default transport is:
 
 ```text
-channel:   aeron:udp?endpoint=127.0.0.1:40123
+channel:   aeron:ipc
 stream ID: 1001
 ```
 

@@ -4,7 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Config {
-    private static final String PRICING_CHANNEL_DEFAULT = "aeron:udp?endpoint=127.0.0.1:40123";
+    private static final String PRICING_CHANNEL_DEFAULT = "aeron:ipc";
     private static final String PRICING_CHANNEL_ENV_KEY = "PRICING_CHANNEL";
     private static final int PRICING_STREAM_ID_DEFAULT = 1001;
     private static final String PRICING_STREAM_ID_ENV_KEY = "PRICING_STREAM_ID";
