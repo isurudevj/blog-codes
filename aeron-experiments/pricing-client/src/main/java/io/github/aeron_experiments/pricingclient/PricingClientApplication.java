@@ -1,12 +1,12 @@
 package io.github.aeron_experiments.pricingclient;
 
 import io.aeron.Subscription;
+import io.github.aeron_experiments.common.AgentConfig;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import io.github.aeron_experiments.common_utils.AeronFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 
 @Slf4j
@@ -25,7 +25,7 @@ public final class PricingClientApplication {
             AeronFactory aeronFactory = AeronFactory.initialize(applicationName)) {
             final Subscription subscription = aeronFactory.createSubscription(channel, streamId);
             try (AgentRunner runner = new AgentRunner(
-                new BusySpinIdleStrategy(),
+                AgentConfig.idleStrategy(),
                 throwable -> log.error("Pricing Client agent failed", throwable),
                 null,
                 new PricingClientAgent(subscription))) {

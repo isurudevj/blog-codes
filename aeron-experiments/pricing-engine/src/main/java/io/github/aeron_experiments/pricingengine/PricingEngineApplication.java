@@ -1,12 +1,12 @@
 package io.github.aeron_experiments.pricingengine;
 
 import io.aeron.Publication;
+import io.github.aeron_experiments.common.AgentConfig;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import io.github.aeron_experiments.common_utils.AeronFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.BusySpinIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 
 @Slf4j
@@ -25,7 +25,7 @@ public final class PricingEngineApplication {
             AeronFactory aeronFactory = AeronFactory.initialize(applicationName)) {
             final Publication publication = aeronFactory.createPublication(channel, streamId);
             try (AgentRunner runner = new AgentRunner(
-                new BusySpinIdleStrategy(),
+                AgentConfig.idleStrategy(),
                 throwable -> log.error("Pricing Engine agent failed", throwable),
                 null,
                 new PricingEngineAgent(publication))) {
