@@ -1,10 +1,8 @@
 package io.github.aeron_experiments.pricingengine;
 
-import io.aeron.Aeron;
-import io.aeron.Counter;
 import io.aeron.Publication;
-import io.github.aeron_experiments.common.ApplicationCounters;
 import io.github.aeron_experiments.common.EnvInitializer;
+import io.github.aeron_experiments.common_utils.AeronFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.BusySpinIdleStrategy;
@@ -23,21 +21,19 @@ public final class PricingEngineApplication {
         final String applicationName = Config.applicationName();
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
-            Aeron aeron = Aeron.connect();
-            Counter identityCounter = aeron.addCounter(
-                ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID,
-                ApplicationCounters.identityLabel(applicationName));
-            Publication publication = aeron.addPublication(channel, streamId);
-            AgentRunner runner = new AgentRunner(
+            AeronFactory aeronFactory = AeronFactory.initialize(applicationName)) {
+            final Publication publication = aeronFactory.createPublication(channel, streamId);
+            try (AgentRunner runner = new AgentRunner(
                 new BusySpinIdleStrategy(),
                 throwable -> log.error("Pricing Engine agent failed", throwable),
                 null,
                 new PricingEngineAgent(publication))) {
-            AgentRunner.startOnThread(runner);
-            log.info("Pricing Engine started: appName={}, channel={}, streamId={}",
-                applicationName, channel, streamId);
-            barrier.await();
-            log.info("Shutting down Pricing Engine");
+                AgentRunner.startOnThread(runner);
+                log.info("Pricing Engine started: appName={}, channel={}, streamId={}",
+                    applicationName, channel, streamId);
+                barrier.await();
+                log.info("Shutting down Pricing Engine");
+            }
         }
     }
 }

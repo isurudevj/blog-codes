@@ -11,6 +11,7 @@ configurations {
 
 dependencies {
     api "org.agrona:agrona:${agronaVersion}"
+    api "io.aeron:aeron-client:${aeronVersion}"
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     sbeTool "uk.co.real-logic:sbe-tool:${sbeVersion}"
