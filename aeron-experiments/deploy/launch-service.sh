@@ -20,6 +20,7 @@ fi
 
 readonly service_name="${app_instance%_*}"
 readonly jar_file="${APPS_DIR}/${service_name}.jar"
+readonly java_opts="${JAVA_OPTS:--Xms2048m -Xmx2048m}"
 
 if [[ ! -r "${jar_file}" ]]; then
     echo "Application JAR is not readable: ${jar_file}" >&2
@@ -53,5 +54,7 @@ if [[ ! "${cpu_affinity_mask}" =~ ^(0[xX])?[0-9a-fA-F]+(,(0[xX])?[0-9a-fA-F]+)*$
     exit 78
 fi
 
-echo "Starting ${app_instance}: jar=${jar_file}, cpu_affinity_mask=${cpu_affinity_mask}"
-exec taskset "${cpu_affinity_mask}" java -jar "${jar_file}"
+read -r -a java_opts_args <<< "${java_opts}"
+
+echo "Starting ${app_instance}: jar=${jar_file}, cpu_affinity_mask=${cpu_affinity_mask}, java_opts=${java_opts}"
+exec taskset "${cpu_affinity_mask}" java "${java_opts_args[@]}" -jar "${jar_file}"
