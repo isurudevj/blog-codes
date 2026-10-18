@@ -4,13 +4,12 @@ import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
 import io.github.aeron_experiments.codec_utils.OrderBookSnapshot;
 import io.github.aeron_experiments.codec_utils.OrderBookSnapshotCodec;
+import lombok.extern.slf4j.Slf4j;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.Agent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 final class PricingClientAgent implements Agent {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PricingClientAgent.class);
     private static final int BOOK_CAPACITY = 20;
     private static final int FRAGMENT_LIMIT = 10;
     private static final long REPORT_INTERVAL_NS = 1_000_000_000L;
@@ -69,7 +68,7 @@ final class PricingClientAgent implements Agent {
 
         final long messagesPerSecond = intervalMessages * REPORT_INTERVAL_NS / elapsedNs;
         final long averageLatencyNs = intervalMessages == 0 ? 0 : intervalLatencyNs / intervalMessages;
-        LOGGER.info(
+        log.info(
             "rate={} msg/s, avgLatency={} ns, maxLatency={} ns, totalMessages={}",
             messagesPerSecond,
             averageLatencyNs,
