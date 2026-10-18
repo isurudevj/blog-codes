@@ -42,6 +42,24 @@ During development, the application can also be run with:
 ./gradlew :monitoring-service:run
 ```
 
+The Pricing Engine publishes a reusable 10-level `OrderBookSnapshot` as fast as
+the Aeron publication accepts it. The Pricing Client decodes each message into
+one reusable object and reports messages per second plus average and maximum
+one-way latency once per second. Both applications use busy-spinning Agrona
+agents and stop through a `ShutdownSignalBarrier`.
+
+Their default transport is:
+
+```text
+channel:   aeron:udp?endpoint=127.0.0.1:40123
+stream ID: 1001
+```
+
+Override it with `PRICING_CHANNEL` and `PRICING_STREAM_ID`. The supplied Linux
+deployment pins `pricing-engine_1` to CPU 4 (`0x10`) and `pricing-client_1` to
+CPU 5 (`0x20`). One-way latency uses `System.nanoTime()` and is meaningful when
+both processes run on the same host, as in this experiment.
+
 ## High-performance Media Driver
 
 The `media-driver` application runs Aeron's Java Media Driver using its
