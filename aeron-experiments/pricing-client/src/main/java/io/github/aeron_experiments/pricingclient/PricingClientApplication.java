@@ -1,7 +1,9 @@
 package io.github.aeron_experiments.pricingclient;
 
 import io.aeron.Aeron;
+import io.aeron.Counter;
 import io.aeron.Subscription;
+import io.github.aeron_experiments.common.ApplicationCounters;
 import io.github.aeron_experiments.common.EnvInitializer;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
@@ -18,9 +20,13 @@ public final class PricingClientApplication {
         EnvInitializer.init();
         final String channel = Config.pricingChannel();
         final int streamId = Config.pricingStreamId();
+        final String applicationName = Config.applicationName();
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
             Aeron aeron = Aeron.connect();
+            Counter identityCounter = aeron.addCounter(
+                ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID,
+                ApplicationCounters.identityLabel(applicationName));
             Subscription subscription = aeron.addSubscription(channel, streamId);
             AgentRunner runner = new AgentRunner(
                 new BusySpinIdleStrategy(),
@@ -28,7 +34,8 @@ public final class PricingClientApplication {
                 null,
                 new PricingClientAgent(subscription))) {
             AgentRunner.startOnThread(runner);
-            log.info("Pricing Client started: channel={}, streamId={}", channel, streamId);
+            log.info("Pricing Client started: appName={}, channel={}, streamId={}",
+                applicationName, channel, streamId);
             barrier.await();
             log.info("Shutting down Pricing Client");
         }

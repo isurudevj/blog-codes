@@ -1,6 +1,7 @@
 package io.github.aeron_experiments.monitoring;
 
 import io.aeron.AeronCounters;
+import io.github.aeron_experiments.common.ApplicationCounters;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.BitUtil;
 import org.agrona.concurrent.Agent;
@@ -57,6 +58,7 @@ final class IpcMonitoringAgent implements Agent {
         final Map<StreamKey, Publication> publications = new HashMap<>();
         final List<Subscriber> subscribers = new ArrayList<>();
         final Map<Integer, CounterValue> systemCounters = new HashMap<>();
+        final Map<Long, String> applicationNames = new HashMap<>();
         final AtomicBuffer metadata = counters.metaDataBuffer();
 
         for (int counterId = 0, maxCounterId = counters.maxCounterId(); counterId <= maxCounterId; counterId++) {
@@ -66,7 +68,9 @@ final class IpcMonitoringAgent implements Agent {
 
             final int typeId = counters.getCounterTypeId(counterId);
             final long value = counters.getCounterValue(counterId);
-            if (AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID == typeId) {
+            if (ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID == typeId) {
+                applicationNames.put(counters.getCounterOwnerId(counterId), applicationName(counterId));
+            } else if (AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID == typeId) {
                 final int keyOffset = CountersReader.metaDataOffset(counterId) + KEY_OFFSET;
                 systemCounters.put(metadata.getInt(keyOffset), new CounterValue(counterId, value));
             } else if (isIpcStreamPosition(typeId)) {
@@ -77,12 +81,15 @@ final class IpcMonitoringAgent implements Agent {
 
                 final StreamKey streamKey = new StreamKey(
                     streamMetadata.sessionId(), streamMetadata.streamId(), streamMetadata.channel());
+                final long ownerId = counters.getCounterOwnerId(counterId);
                 if (AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == typeId) {
-                    subscribers.add(new Subscriber(counterId, streamMetadata.registrationId(), streamKey, value));
+                    subscribers.add(new Subscriber(
+                        counterId, ownerId, streamMetadata.registrationId(), streamKey, value));
                 } else {
                     final Publication publication = publications.computeIfAbsent(streamKey, Publication::new);
                     if (AeronCounters.DRIVER_PUBLISHER_POS_TYPE_ID == typeId) {
                         publication.positionCounterId = counterId;
+                        publication.ownerId = ownerId;
                         publication.registrationId = streamMetadata.registrationId();
                         publication.position = value;
                     } else {
@@ -98,8 +105,8 @@ final class IpcMonitoringAgent implements Agent {
             .append(" interval=").append(intervalMs / 1_000.0).append("s\n");
         view.append("PUBLICATIONS\n");
         view.append(String.format(Locale.ROOT,
-            "%-7s %-11s %14s %12s %12s %12s %s%n",
-            "STREAM", "SESSION", "POSITION", "RATE", "WINDOW", "MAX-LAG", "STATE"));
+            "%-20s %-7s %-11s %14s %12s %12s %12s %s%n",
+            "APP", "STREAM", "SESSION", "POSITION", "RATE", "WINDOW", "MAX-LAG", "STATE"));
 
         final List<Publication> sortedPublications = publications.values().stream()
             .filter(publication -> publication.positionCounterId >= 0)
@@ -119,7 +126,8 @@ final class IpcMonitoringAgent implements Agent {
             final long window = publication.hasLimit ? publication.limit - publication.position : Long.MIN_VALUE;
             final String state = publicationState(publication, matchingSubscribers, window, nowMs);
             view.append(String.format(Locale.ROOT,
-                "%-7d %-11d %14s %12s %12s %12s %s%n",
+                "%-20s %-7d %-11d %14s %12s %12s %12s %s%n",
+                displayName(applicationNames, publication.ownerId),
                 publication.key.streamId(), publication.key.sessionId(), formatBytes(publication.position),
                 formatRate(rate(publication.positionCounterId, publication.position, elapsedMs)),
                 publication.hasLimit ? formatBytes(window) : "n/a", formatBytes(maxLag), state));
@@ -127,8 +135,8 @@ final class IpcMonitoringAgent implements Agent {
 
         view.append("SUBSCRIBERS\n");
         view.append(String.format(Locale.ROOT,
-            "%-7s %-11s %-12s %14s %12s %12s %s%n",
-            "STREAM", "SESSION", "REG-ID", "POSITION", "RATE", "LAG", "STATE"));
+            "%-20s %-7s %-11s %-12s %14s %12s %12s %s%n",
+            "APP", "STREAM", "SESSION", "REG-ID", "POSITION", "RATE", "LAG", "STATE"));
         subscribers.sort(Comparator.comparingInt(subscriber -> subscriber.key.streamId()));
         if (subscribers.isEmpty()) {
             view.append("(no IPC subscribers)\n");
@@ -138,7 +146,8 @@ final class IpcMonitoringAgent implements Agent {
             final long lag = null == publication || publication.positionCounterId < 0 ? Long.MIN_VALUE :
                 Math.max(0, publication.position - subscriber.position);
             view.append(String.format(Locale.ROOT,
-                "%-7d %-11d %-12d %14s %12s %12s %s%n",
+                "%-20s %-7d %-11d %-12d %14s %12s %12s %s%n",
+                displayName(applicationNames, subscriber.ownerId),
                 subscriber.key.streamId(), subscriber.key.sessionId(), subscriber.registrationId,
                 formatBytes(subscriber.position), formatRate(rate(subscriber.counterId, subscriber.position, elapsedMs)),
                 Long.MIN_VALUE == lag ? "n/a" : formatBytes(lag),
@@ -226,6 +235,16 @@ final class IpcMonitoringAgent implements Agent {
             AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == typeId;
     }
 
+    private String applicationName(final int counterId) {
+        final String label = counters.getCounterLabel(counterId);
+        return label.startsWith(ApplicationCounters.APPLICATION_IDENTITY_LABEL_PREFIX) ?
+            label.substring(ApplicationCounters.APPLICATION_IDENTITY_LABEL_PREFIX.length()) : label;
+    }
+
+    private static String displayName(final Map<Long, String> applicationNames, final long ownerId) {
+        return applicationNames.getOrDefault(ownerId, "client-" + ownerId);
+    }
+
     private static StreamMetadata readStreamMetadata(final AtomicBuffer metadata, final int counterId) {
         final int keyOffset = CountersReader.metaDataOffset(counterId) + KEY_OFFSET;
         final long registrationId = metadata.getLong(keyOffset + REGISTRATION_ID_OFFSET);
@@ -278,13 +297,14 @@ final class IpcMonitoringAgent implements Agent {
 
     private record StreamKey(int sessionId, int streamId, String channel) { }
     private record StreamMetadata(long registrationId, int sessionId, int streamId, String channel) { }
-    private record Subscriber(int counterId, long registrationId, StreamKey key, long position) { }
+    private record Subscriber(int counterId, long ownerId, long registrationId, StreamKey key, long position) { }
     private record CounterValue(int counterId, long value) { }
     private record PreviousValue(long value) { }
 
     private static final class Publication {
         private final StreamKey key;
         private int positionCounterId = -1;
+        private long ownerId;
         private long registrationId;
         private long position;
         private long limit;

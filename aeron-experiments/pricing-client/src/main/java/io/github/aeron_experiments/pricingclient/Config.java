@@ -4,6 +4,8 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Config {
+    private static final String APP_NAME_DEFAULT = "pricing-client-1";
+    private static final String APP_NAME_ENV_KEY = "APP_NAME";
     private static final String PRICING_CHANNEL_DEFAULT = "aeron:ipc";
     private static final String PRICING_CHANNEL_ENV_KEY = "PRICING_CHANNEL";
     private static final int PRICING_STREAM_ID_DEFAULT = 1001;
@@ -16,5 +18,9 @@ public class Config {
 
     public static String pricingChannel() {
         return System.getenv().getOrDefault(PRICING_CHANNEL_ENV_KEY, PRICING_CHANNEL_DEFAULT);
+    }
+
+    public static String applicationName() {
+        return System.getenv().getOrDefault(APP_NAME_ENV_KEY, APP_NAME_DEFAULT);
     }
 }
