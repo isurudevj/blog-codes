@@ -20,8 +20,10 @@ class AgentConfigTest {
         assertInstanceOf(YieldingIdleStrategy.class, AgentConfig.idleStrategy("yielding"));
         assertInstanceOf(BackoffIdleStrategy.class, AgentConfig.idleStrategy("backoff"));
         assertInstanceOf(SleepingIdleStrategy.class, AgentConfig.idleStrategy("sleeping"));
+        assertInstanceOf(SleepingIdleStrategy.class, AgentConfig.idleStrategy(SleepingIdleStrategy.ALIAS));
         assertInstanceOf(SleepingMillisIdleStrategy.class, AgentConfig.idleStrategy("sleeping-ms"));
         assertInstanceOf(NoOpIdleStrategy.class, AgentConfig.idleStrategy("noop"));
+        assertInstanceOf(CustomSlow1IdleStrategy.class, AgentConfig.idleStrategy("custom-slow-1"));
     }
 
     @Test
