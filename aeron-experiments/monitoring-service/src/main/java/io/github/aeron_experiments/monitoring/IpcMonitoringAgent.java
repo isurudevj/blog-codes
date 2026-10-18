@@ -29,13 +29,18 @@ final class IpcMonitoringAgent implements Agent {
 
     private final CountersReader counters;
     private final long intervalMs;
+    private final PrometheusMetricsServer metricsServer;
     private final Map<Integer, PreviousValue> previousValues = new HashMap<>();
     private final Map<StreamKey, Long> constrainedSinceMs = new HashMap<>();
     private long nextSampleMs;
 
-    IpcMonitoringAgent(final CountersReader counters, final long intervalMs) {
+    IpcMonitoringAgent(
+        final CountersReader counters,
+        final long intervalMs,
+        final PrometheusMetricsServer metricsServer) {
         this.counters = counters;
         this.intervalMs = intervalMs;
+        this.metricsServer = metricsServer;
     }
 
     public int doWork() {
@@ -101,6 +106,14 @@ final class IpcMonitoringAgent implements Agent {
         }
 
         final StringBuilder view = new StringBuilder(2_048);
+        final Map<Integer, Double> sampleRates = new HashMap<>();
+        publications.values().stream()
+            .filter(publication -> publication.positionCounterId >= 0)
+            .forEach(publication -> sampleRates.put(
+                publication.positionCounterId,
+                rate(publication.positionCounterId, publication.position, elapsedMs)));
+        subscribers.forEach(subscriber -> sampleRates.put(
+            subscriber.counterId, rate(subscriber.counterId, subscriber.position, elapsedMs)));
         view.append("AERON IPC MONITOR  time=").append(Instant.ofEpochMilli(nowMs))
             .append(" interval=").append(intervalMs / 1_000.0).append("s\n");
         view.append("PUBLICATIONS\n");
@@ -129,7 +142,7 @@ final class IpcMonitoringAgent implements Agent {
                 "%-20s %-7d %-11d %14s %12s %12s %12s %s%n",
                 displayName(applicationNames, publication.ownerId),
                 publication.key.streamId(), publication.key.sessionId(), formatBytes(publication.position),
-                formatRate(rate(publication.positionCounterId, publication.position, elapsedMs)),
+                formatRate(sampleRates.get(publication.positionCounterId)),
                 publication.hasLimit ? formatBytes(window) : "n/a", formatBytes(maxLag), state));
         }
 
@@ -149,13 +162,15 @@ final class IpcMonitoringAgent implements Agent {
                 "%-20s %-7d %-11d %-12d %14s %12s %12s %s%n",
                 displayName(applicationNames, subscriber.ownerId),
                 subscriber.key.streamId(), subscriber.key.sessionId(), subscriber.registrationId,
-                formatBytes(subscriber.position), formatRate(rate(subscriber.counterId, subscriber.position, elapsedMs)),
+                formatBytes(subscriber.position), formatRate(sampleRates.get(subscriber.counterId)),
                 Long.MIN_VALUE == lag ? "n/a" : formatBytes(lag),
                 null == publication || publication.positionCounterId < 0 ? "NO_PUBLICATION" :
                     lag > 0 ? "LAGGING" : "CONNECTED"));
         }
 
         appendHealth(view, systemCounters, elapsedMs);
+        metricsServer.update(buildPrometheusMetrics(
+            nowMs, sortedPublications, subscribers, publications, applicationNames, systemCounters, sampleRates));
         previousValues.keySet().removeIf(counterId ->
             counterId > counters.maxCounterId() || RECORD_ALLOCATED != counters.getCounterState(counterId));
         return view.toString().stripTrailing();
@@ -193,6 +208,117 @@ final class IpcMonitoringAgent implements Agent {
             view.append("conductor-max-cycle=").append(formatDurationNanos(maxCycle.value)).append(' ');
             remember(maxCycle.counterId, maxCycle.value);
         }
+    }
+
+    private String buildPrometheusMetrics(
+        final long nowMs,
+        final List<Publication> publications,
+        final List<Subscriber> subscribers,
+        final Map<StreamKey, Publication> publicationsByStream,
+        final Map<Long, String> applicationNames,
+        final Map<Integer, CounterValue> systemCounters,
+        final Map<Integer, Double> sampleRates) {
+        final StringBuilder output = new StringBuilder(4_096);
+        metricHeader(output, "aeron_monitor_ready", "Whether the first CnC sample has been collected.");
+        output.append("aeron_monitor_ready 1\n");
+        metricHeader(output, "aeron_monitor_snapshot_timestamp_seconds", "Unix time of the latest CnC sample.");
+        output.append("aeron_monitor_snapshot_timestamp_seconds ").append(nowMs / 1_000.0).append('\n');
+
+        metricHeader(output, "aeron_ipc_publisher_position_bytes", "Current IPC publisher position in bytes.");
+        metricHeader(output, "aeron_ipc_publisher_rate_bytes_per_second", "IPC publisher rate over the sample interval.");
+        metricHeader(output, "aeron_ipc_publisher_window_bytes", "Available IPC publication window in bytes.");
+        metricHeader(output, "aeron_ipc_publisher_max_subscriber_lag_bytes", "Maximum subscriber lag for the publication.");
+        metricHeader(output, "aeron_ipc_publisher_constrained", "Whether the IPC publication window is exhausted.");
+        metricHeader(output, "aeron_ipc_publisher_constrained_duration_seconds", "Observed duration of publication constraint.");
+        for (final Publication publication : publications) {
+            final String labels = streamLabels(
+                displayName(applicationNames, publication.ownerId), publication.key);
+            final List<Subscriber> matchingSubscribers = subscribers.stream()
+                .filter(subscriber -> subscriber.key.equals(publication.key)).toList();
+            final long maxLag = matchingSubscribers.stream()
+                .mapToLong(subscriber -> Math.max(0, publication.position - subscriber.position))
+                .max().orElse(0);
+            final long window = publication.hasLimit ? publication.limit - publication.position : 0;
+            final boolean constrained = publication.hasLimit && window <= 0 && !matchingSubscribers.isEmpty();
+            final Long constrainedSince = constrainedSinceMs.get(publication.key);
+            sample(output, "aeron_ipc_publisher_position_bytes", labels, publication.position);
+            sample(output, "aeron_ipc_publisher_rate_bytes_per_second", labels,
+                sampleRates.getOrDefault(publication.positionCounterId, 0.0));
+            sample(output, "aeron_ipc_publisher_window_bytes", labels, window);
+            sample(output, "aeron_ipc_publisher_max_subscriber_lag_bytes", labels, maxLag);
+            sample(output, "aeron_ipc_publisher_constrained", labels, constrained ? 1 : 0);
+            sample(output, "aeron_ipc_publisher_constrained_duration_seconds", labels,
+                constrained && null != constrainedSince ? (nowMs - constrainedSince) / 1_000.0 : 0);
+        }
+
+        metricHeader(output, "aeron_ipc_subscriber_position_bytes", "Current IPC subscriber position in bytes.");
+        metricHeader(output, "aeron_ipc_subscriber_rate_bytes_per_second", "IPC subscriber rate over the sample interval.");
+        metricHeader(output, "aeron_ipc_subscriber_lag_bytes", "IPC subscriber lag behind its publisher in bytes.");
+        metricHeader(output, "aeron_ipc_subscriber_lagging", "Whether the IPC subscriber is behind its publisher.");
+        for (final Subscriber subscriber : subscribers) {
+            final String labels = subscriberLabels(
+                displayName(applicationNames, subscriber.ownerId), subscriber);
+            final Publication publication = publicationsByStream.get(subscriber.key);
+            final long lag = null == publication || publication.positionCounterId < 0 ? 0 :
+                Math.max(0, publication.position - subscriber.position);
+            sample(output, "aeron_ipc_subscriber_position_bytes", labels, subscriber.position);
+            sample(output, "aeron_ipc_subscriber_rate_bytes_per_second", labels,
+                sampleRates.getOrDefault(subscriber.counterId, 0.0));
+            sample(output, "aeron_ipc_subscriber_lag_bytes", labels, lag);
+            sample(output, "aeron_ipc_subscriber_lagging", labels, lag > 0 ? 1 : 0);
+        }
+
+        driverMetric(output, "aeron_driver_errors", "Driver errors observed.",
+            AeronCounters.SYSTEM_COUNTER_ID_ERRORS, systemCounters);
+        driverMetric(output, "aeron_driver_unblocked_publications", "Publications unblocked by the driver.",
+            AeronCounters.SYSTEM_COUNTER_ID_UNBLOCKED_PUBLICATIONS, systemCounters);
+        driverMetric(output, "aeron_driver_client_timeouts", "Aeron client liveness timeouts.",
+            AeronCounters.SYSTEM_COUNTER_ID_CLIENT_TIMEOUTS, systemCounters);
+        driverMetric(output, "aeron_driver_publications_revoked", "Publications revoked by the driver.",
+            AeronCounters.SYSTEM_COUNTER_ID_PUBLICATIONS_REVOKED, systemCounters);
+        driverMetric(output, "aeron_driver_conductor_threshold_exceeded",
+            "Conductor work cycles exceeding their threshold.",
+            AeronCounters.SYSTEM_COUNTER_ID_CONDUCTOR_CYCLE_TIME_THRESHOLD_EXCEEDED, systemCounters);
+        metricHeader(output, "aeron_driver_conductor_max_cycle_seconds", "Maximum conductor work cycle in seconds.");
+        final CounterValue maxCycle = systemCounters.get(AeronCounters.SYSTEM_COUNTER_ID_CONDUCTOR_MAX_CYCLE_TIME);
+        output.append("aeron_driver_conductor_max_cycle_seconds ")
+            .append(null == maxCycle ? 0 : maxCycle.value / 1_000_000_000.0).append('\n');
+        return output.toString();
+    }
+
+    private static void driverMetric(
+        final StringBuilder output,
+        final String name,
+        final String help,
+        final int systemCounterId,
+        final Map<Integer, CounterValue> systemCounters) {
+        metricHeader(output, name, help);
+        final CounterValue value = systemCounters.get(systemCounterId);
+        output.append(name).append(' ').append(null == value ? 0 : value.value).append('\n');
+    }
+
+    private static void metricHeader(final StringBuilder output, final String name, final String help) {
+        output.append("# HELP ").append(name).append(' ').append(help).append('\n');
+        output.append("# TYPE ").append(name).append(" gauge\n");
+    }
+
+    private static void sample(
+        final StringBuilder output, final String name, final String labels, final double value) {
+        output.append(name).append('{').append(labels).append("} ").append(value).append('\n');
+    }
+
+    private static String streamLabels(final String applicationName, final StreamKey key) {
+        return "application=\"" + escapeLabel(applicationName) + "\",stream_id=\"" + key.streamId +
+            "\",session_id=\"" + key.sessionId + "\"";
+    }
+
+    private static String subscriberLabels(final String applicationName, final Subscriber subscriber) {
+        return streamLabels(applicationName, subscriber.key) + ",registration_id=\"" +
+            subscriber.registrationId + "\"";
+    }
+
+    private static String escapeLabel(final String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
     }
 
     private void appendHealthCounter(

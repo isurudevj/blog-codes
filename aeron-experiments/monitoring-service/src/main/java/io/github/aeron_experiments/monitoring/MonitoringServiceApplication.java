@@ -11,19 +11,22 @@ public final class MonitoringServiceApplication {
     private MonitoringServiceApplication() {
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
         EnvInitializer.init();
 
         try (CncCounters cncCounters = CncCounters.open(Config.aeronDirectory());
+            PrometheusMetricsServer metricsServer = new PrometheusMetricsServer(
+                Config.metricsHost(), Config.metricsPort());
             ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
             AgentRunner runner = new AgentRunner(
                 new SleepingMillisIdleStrategy(100),
                 throwable -> log.error("Monitoring agent failed", throwable),
                 null,
-                new IpcMonitoringAgent(cncCounters.countersReader(), Config.intervalMs()))) {
+                new IpcMonitoringAgent(cncCounters.countersReader(), Config.intervalMs(), metricsServer))) {
+            metricsServer.start();
             AgentRunner.startOnThread(runner);
-            log.info("Aeron IPC monitoring started: directory={}, interval={}s",
-                Config.aeronDirectory(), Config.intervalSeconds());
+            log.info("Aeron IPC monitoring started: directory={}, interval={}s, metrics=http://{}:{}/metrics",
+                Config.aeronDirectory(), Config.intervalSeconds(), Config.metricsHost(), Config.metricsPort());
             barrier.await();
             log.info("Shutting down Aeron IPC monitoring");
         }

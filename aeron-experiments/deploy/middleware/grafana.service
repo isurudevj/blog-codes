@@ -1,0 +1,20 @@
+[Unit]
+Description=Grafana
+Wants=network-online.target prometheus.service
+After=network-online.target prometheus.service
+
+[Service]
+Type=simple
+User=grafana
+Group=grafana
+WorkingDirectory=/opt/middleware/grafana
+Environment=GF_PATHS_HOME=/opt/middleware/grafana
+ExecStart=/opt/middleware/grafana/bin/grafana server \
+    --homepath=/opt/middleware/grafana \
+    --config=/etc/grafana/grafana.ini
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

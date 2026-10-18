@@ -229,3 +229,64 @@ application so the new configuration is loaded:
 ```shell
 /opt/apps/deploy/app.sh restart media-driver 1
 ```
+
+## Deploy Prometheus and Grafana
+
+The monitoring service exposes its latest Aeron IPC snapshot in Prometheus
+text format on the Artio loopback interface:
+
+```text
+http://127.0.0.1:9100/metrics
+http://127.0.0.1:9100/health
+```
+
+Deploy native Prometheus and Grafana binaries with:
+
+```shell
+./deploy/deploy_middleware.sh
+```
+
+The script downloads pinned Linux AMD64 releases from the official Prometheus
+and Grafana URLs, verifies their SHA-256 checksums, installs dedicated system
+users, provisions the Prometheus datasource and Aeron IPC dashboard, and
+enables both systemd services. It does not use Docker.
+
+The defaults can be overridden when upgrading or using an internal artifact
+mirror:
+
+```shell
+PROMETHEUS_VERSION=3.15.0 \
+PROMETHEUS_URL=https://example/prometheus.tar.gz \
+PROMETHEUS_SHA256=<sha256> \
+GRAFANA_VERSION=13.2.2 \
+GRAFANA_URL=https://example/grafana.tar.gz \
+GRAFANA_SHA256=<sha256> \
+./deploy/deploy_middleware.sh
+```
+
+Prometheus listens only on `127.0.0.1:9090`. Grafana listens on port `3000`
+on all Artio interfaces and is available at:
+
+```text
+http://artio:3000
+```
+
+Allow inbound TCP port `3000` from the trusted client network in the Artio
+host firewall or cloud security group. Prometheus and the monitoring endpoint
+should not be exposed externally. Grafana initially uses its standard
+`admin`/`admin` login and requires the password to be changed at first login.
+
+Check the native services with:
+
+```shell
+sudo systemctl status prometheus grafana
+sudo journalctl -u prometheus -u grafana -f
+```
+
+Deploy and start the monitoring service before validating the Prometheus
+target:
+
+```shell
+./deploy/deploy.sh
+ssh artio /opt/apps/deploy/app.sh restart monitoring-service 1
+```

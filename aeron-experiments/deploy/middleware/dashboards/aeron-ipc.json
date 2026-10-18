@@ -1,0 +1,128 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [
+        {"expr": "aeron_ipc_publisher_position_bytes{stream_id=~\"$stream_id\"}", "legendFormat": "publisher {{application}}", "refId": "A"},
+        {"expr": "aeron_ipc_subscriber_position_bytes{stream_id=~\"$stream_id\"}", "legendFormat": "subscriber {{application}}", "refId": "B"}
+      ],
+      "title": "Publisher and Subscriber Positions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "targets": [
+        {"expr": "aeron_ipc_publisher_rate_bytes_per_second{stream_id=~\"$stream_id\"}", "legendFormat": "publisher {{application}}", "refId": "A"},
+        {"expr": "aeron_ipc_subscriber_rate_bytes_per_second{stream_id=~\"$stream_id\"}", "legendFormat": "subscriber {{application}}", "refId": "B"}
+      ],
+      "title": "Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "targets": [
+        {"expr": "aeron_ipc_subscriber_lag_bytes{stream_id=~\"$stream_id\"}", "legendFormat": "{{application}}", "refId": "A"}
+      ],
+      "title": "Subscriber Lag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "targets": [
+        {"expr": "aeron_ipc_publisher_window_bytes{stream_id=~\"$stream_id\"}", "legendFormat": "{{application}}", "refId": "A"}
+      ],
+      "title": "Available Publication Window",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"mappings": [{"options": {"0": {"color": "green", "text": "HEALTHY"}, "1": {"color": "red", "text": "CONSTRAINED"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 16},
+      "id": 5,
+      "targets": [{"expr": "max(aeron_ipc_publisher_constrained{stream_id=~\"$stream_id\"})", "refId": "A"}],
+      "title": "Publication State",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 16},
+      "id": 6,
+      "targets": [{"expr": "max(aeron_ipc_publisher_constrained_duration_seconds{stream_id=~\"$stream_id\"})", "refId": "A"}],
+      "title": "Constrained Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 5, "w": 12, "x": 12, "y": 16},
+      "id": 7,
+      "targets": [
+        {"expr": "aeron_driver_errors", "legendFormat": "errors", "refId": "A"},
+        {"expr": "aeron_driver_unblocked_publications", "legendFormat": "unblocked publications", "refId": "B"},
+        {"expr": "aeron_driver_client_timeouts", "legendFormat": "client timeouts", "refId": "C"},
+        {"expr": "aeron_driver_publications_revoked", "legendFormat": "revoked publications", "refId": "D"},
+        {"expr": "aeron_driver_conductor_threshold_exceeded", "legendFormat": "conductor threshold", "refId": "E"}
+      ],
+      "title": "Driver Health Counters",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 12, "x": 0, "y": 21},
+      "id": 8,
+      "targets": [{"expr": "aeron_driver_conductor_max_cycle_seconds", "refId": "A"}],
+      "title": "Conductor Maximum Cycle",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 12, "x": 12, "y": 21},
+      "id": 9,
+      "targets": [{"expr": "time() - aeron_monitor_snapshot_timestamp_seconds", "refId": "A"}],
+      "title": "Monitoring Snapshot Age",
+      "type": "stat"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["aeron", "ipc"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(aeron_ipc_publisher_position_bytes, stream_id)",
+        "includeAll": true,
+        "label": "Stream",
+        "name": "stream_id",
+        "query": {"query": "label_values(aeron_ipc_publisher_position_bytes, stream_id)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-15m", "to": "now"},
+  "timezone": "browser",
+  "title": "Aeron IPC Monitoring",
+  "uid": "aeron-ipc-monitoring",
+  "version": 1
+}
