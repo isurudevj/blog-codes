@@ -16,9 +16,12 @@ import java.io.File;
 public final class MonitoringAgent implements Agent {
 
     private static final int REGISTRATION_ID_OFFSET = 0;
-    private static final int SESSION_ID_OFFSET = REGISTRATION_ID_OFFSET + BitUtil.SIZE_OF_LONG;
-    private static final int STREAM_ID_OFFSET = SESSION_ID_OFFSET + BitUtil.SIZE_OF_INT;
-    private static final int CHANNEL_OFFSET = STREAM_ID_OFFSET + BitUtil.SIZE_OF_INT;
+    private static final int SESSION_ID_OFFSET =
+            REGISTRATION_ID_OFFSET + BitUtil.SIZE_OF_LONG;
+    private static final int STREAM_ID_OFFSET =
+            SESSION_ID_OFFSET + BitUtil.SIZE_OF_INT;
+    private static final int CHANNEL_OFFSET =
+            STREAM_ID_OFFSET + BitUtil.SIZE_OF_INT;
 
     private final int checkInterval = 5_000;
     private long lastCheckInterval = -1;
@@ -62,6 +65,17 @@ public final class MonitoringAgent implements Agent {
 
                     if (AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == reader.getCounterTypeId(counterId)) {
                         log.info("Driver subscriber position label:value {}:{}", appLabel, value);
+
+                        int keyOffset = CountersReader.metaDataOffset(counterId) + CountersReader.KEY_OFFSET;
+                        int sessionId = reader.metaDataBuffer().getInt(keyOffset + SESSION_ID_OFFSET);
+                        int streamId = reader.metaDataBuffer().getInt(keyOffset + STREAM_ID_OFFSET);
+                        String channel = reader.metaDataBuffer().getStringAscii(keyOffset + CHANNEL_OFFSET);
+
+                        log.info(
+                                "Subscriber position app={} channel={} streamId={} sessionId={} position={}",
+                                appLabel, channel, streamId, sessionId, value);
+
+
                     }
                 });
             } catch (Exception ex) {
