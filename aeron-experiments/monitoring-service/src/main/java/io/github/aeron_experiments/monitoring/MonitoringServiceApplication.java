@@ -17,13 +17,12 @@ public class MonitoringServiceApplication {
     public static void main(final String[] args) {
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier()) {
             EnvInitializer.init();
-            CncCounters counters = CncCounters.open(Paths.get(Aeron.Context.getAeronDirectoryName()).toFile());
             ShutdownUtils.registerShutdownHook(barrier::signal);
 
             AgentRunner agentRunner = new AgentRunner(new SleepingIdleStrategy(),
                     throwable -> log.error("Error occurred", throwable),
                     null,
-                    new MonitoringAgent(counters));
+                    new MonitoringAgent());
             AgentRunner.startOnThread(agentRunner,
                     ThreadFactoryUtils.createDemonThreadFactory("MonitoringService"));
 
@@ -31,7 +30,6 @@ public class MonitoringServiceApplication {
 
             barrier.await();
             agentRunner.close();
-            counters.close();
         } catch (Exception e) {
             log.error("Error while starting up MonitoringServiceApplication", e);
         }
