@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-24T12:30:45.123Z",
+  "mediaDriver": {
+    "active": true,
+    "heartbeatAgeMs": 12
+  },
+  "streams": [
+    {
+      "channel": "aeron:ipc",
+      "streamId": 1001,
+      "sessionId": 89789,
+      "publisher": {
+        "application": "pricing-engine-1",
+        "registrationId": 98789,
+        "ownerId": 78907,
+        "positionBytes": 1230,
+        "rateBytesPerSecond": 123.0
+      },
+      "subscribers": [
+        {
+          "application": "pricing-client-1",
+          "registrationId": 45678,
+          "ownerId": 34567,
+          "positionBytes": 1218,
+          "rateBytesPerSecond": 120.5,
+          "lagBytes": 12
+        },
+        {
+          "application": "risk-engine-1",
+          "registrationId": 56789,
+          "ownerId": 45678,
+          "positionBytes": 1200,
+          "rateBytesPerSecond": 118.2,
+          "lagBytes": 30
+        }
+      ]
+    }
+  ]
+}
