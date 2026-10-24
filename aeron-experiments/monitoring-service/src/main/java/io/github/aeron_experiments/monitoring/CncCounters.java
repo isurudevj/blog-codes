@@ -3,7 +3,6 @@ package io.github.aeron_experiments.monitoring;
 import io.aeron.CncFileDescriptor;
 import org.agrona.IoUtil;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.agrona.concurrent.ringbuffer.ManyToOneRingBuffer;
 import org.agrona.concurrent.status.CountersReader;
 
 import java.io.File;
@@ -13,15 +12,10 @@ import java.nio.channels.FileChannel;
 final class CncCounters implements AutoCloseable {
     private final MappedByteBuffer cncByteBuffer;
     private final CountersReader countersReader;
-    private final ManyToOneRingBuffer toDriverBuffer;
 
-    private CncCounters(
-        final MappedByteBuffer cncByteBuffer,
-        final CountersReader countersReader,
-        final ManyToOneRingBuffer toDriverBuffer) {
+    private CncCounters(final MappedByteBuffer cncByteBuffer, final CountersReader countersReader) {
         this.cncByteBuffer = cncByteBuffer;
         this.countersReader = countersReader;
-        this.toDriverBuffer = toDriverBuffer;
     }
 
     static CncCounters open(final File aeronDirectory) {
@@ -39,8 +33,7 @@ final class CncCounters implements AutoCloseable {
 
             return new CncCounters(cncByteBuffer, new CountersReader(
                 CncFileDescriptor.createCountersMetaDataBuffer(cncByteBuffer, metadataBuffer),
-                CncFileDescriptor.createCountersValuesBuffer(cncByteBuffer, metadataBuffer)),
-                new ManyToOneRingBuffer(CncFileDescriptor.createToDriverBuffer(cncByteBuffer, metadataBuffer)));
+                CncFileDescriptor.createCountersValuesBuffer(cncByteBuffer, metadataBuffer)));
         } catch (final RuntimeException ex) {
             IoUtil.unmap(cncByteBuffer);
             throw ex;
@@ -49,10 +42,6 @@ final class CncCounters implements AutoCloseable {
 
     CountersReader countersReader() {
         return countersReader;
-    }
-
-    long driverHeartbeatAgeMs(final long nowMs) {
-        return Math.max(0, nowMs - toDriverBuffer.consumerHeartbeatTime());
     }
 
     public void close() {
