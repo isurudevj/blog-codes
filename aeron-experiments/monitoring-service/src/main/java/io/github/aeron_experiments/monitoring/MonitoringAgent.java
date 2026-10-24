@@ -23,6 +23,8 @@ public final class MonitoringAgent implements Agent {
     private final int checkInterval = 5_000;
     private long lastCheckInterval = -1;
 
+    private final Long2ObjectHashMap<String> appLabels = new Long2ObjectHashMap<>();
+
     public MonitoringAgent() {
     }
 
@@ -38,7 +40,6 @@ public final class MonitoringAgent implements Agent {
 
     @Override
     public int doWork() {
-        final Long2ObjectHashMap<String> appLabels = new Long2ObjectHashMap<>();
         long timeNow = System.currentTimeMillis();
         if (timeNow - lastCheckInterval > checkInterval) {
             lastCheckInterval = timeNow;
@@ -48,22 +49,24 @@ public final class MonitoringAgent implements Agent {
                 return 0;
             }
 
-            CncCounters cncCounters = CncCounters.open(new File(Aeron.Context.getAeronDirectoryName()));
-            CountersReader reader = cncCounters.countersReader();
-            reader.forEach((value, counterId, label) -> {
-                long ownerId = reader.getCounterOwnerId(counterId);
-                if (ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID == reader.getCounterTypeId(counterId)) {
-                    log.info("Application Identity ownerId:label {}:{}", ownerId, label);
-                    appLabels.put(ownerId, label);
-                }
+            try (CncCounters cncCounters = CncCounters.open(new File(Aeron.Context.getAeronDirectoryName()))) {
+                CountersReader reader = cncCounters.countersReader();
+                reader.forEach((value, counterId, label) -> {
+                    long ownerId = reader.getCounterOwnerId(counterId);
+                    if (ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID == reader.getCounterTypeId(counterId)) {
+                        log.info("Application Identity ownerId:label {}:{}", ownerId, label);
+                        appLabels.put(ownerId, label);
+                    }
 
-                String appLabel = appLabels.getOrDefault(ownerId, "untracked-app");
+                    String appLabel = appLabels.getOrDefault(ownerId, "untracked-app");
 
-                if (AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == reader.getCounterTypeId(counterId)) {
-                    log.info("Driver subscriber position label:value {}:{}", appLabel, value);
-                }
-            });
-            cncCounters.close();
+                    if (AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == reader.getCounterTypeId(counterId)) {
+                        log.info("Driver subscriber position label:value {}:{}", appLabel, value);
+                    }
+                });
+            } catch (Exception ex) {
+                log.error("Error while trying to read counters", ex);
+            }
         }
         return 0;
     }
