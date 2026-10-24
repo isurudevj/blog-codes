@@ -26,7 +26,7 @@
           "lagBytes": 12
         },
         {
-          "application": "risk-engine-1",
+          "application": "pricing-client-2",
           "registrationId": 56789,
           "ownerId": 45678,
           "positionBytes": 1200,
