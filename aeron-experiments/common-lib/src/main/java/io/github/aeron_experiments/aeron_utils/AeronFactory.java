@@ -1,4 +1,4 @@
-package io.github.aeron_experiments.common_utils;
+package io.github.aeron_experiments.aeron_utils;
 
 import io.aeron.Aeron;
 import io.aeron.Counter;

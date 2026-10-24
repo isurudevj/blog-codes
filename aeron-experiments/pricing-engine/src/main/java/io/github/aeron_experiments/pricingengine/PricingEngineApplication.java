@@ -4,7 +4,7 @@ import io.aeron.Publication;
 import io.github.aeron_experiments.common.AgentConfig;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ThreadFactoryUtils;
-import io.github.aeron_experiments.common_utils.AeronFactory;
+import io.github.aeron_experiments.aeron_utils.AeronFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.ShutdownSignalBarrier;

@@ -4,10 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.Agent;
 
 @Slf4j
-public final class IpcMonitoringAgent implements Agent {
+public final class MonitoringAgent implements Agent {
 
-    public IpcMonitoringAgent() {
+    private final CncCounters cncCounters;
 
+    public MonitoringAgent(CncCounters cncCounters) {
+
+        this.cncCounters = cncCounters;
     }
 
     @Override
