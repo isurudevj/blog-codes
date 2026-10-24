@@ -74,8 +74,6 @@ public final class MonitoringAgent implements Agent {
                         log.info(
                                 "Subscriber position app={} channel={} streamId={} sessionId={} position={}",
                                 appLabel, channel, streamId, sessionId, value);
-
-
                     }
                 });
             } catch (Exception ex) {
