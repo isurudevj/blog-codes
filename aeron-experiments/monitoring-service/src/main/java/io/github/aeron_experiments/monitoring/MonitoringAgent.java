@@ -1,32 +1,18 @@
 package io.github.aeron_experiments.monitoring;
 
 import io.aeron.Aeron;
-import io.aeron.AeronCounters;
 import io.aeron.CommonContext;
-import io.github.aeron_experiments.common.ApplicationCounters;
 import lombok.extern.slf4j.Slf4j;
-import org.agrona.BitUtil;
-import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.concurrent.Agent;
-import org.agrona.concurrent.status.CountersReader;
 
 import java.io.File;
 
 @Slf4j
 public final class MonitoringAgent implements Agent {
 
-    private static final int REGISTRATION_ID_OFFSET = 0;
-    private static final int SESSION_ID_OFFSET =
-            REGISTRATION_ID_OFFSET + BitUtil.SIZE_OF_LONG;
-    private static final int STREAM_ID_OFFSET =
-            SESSION_ID_OFFSET + BitUtil.SIZE_OF_INT;
-    private static final int CHANNEL_OFFSET =
-            STREAM_ID_OFFSET + BitUtil.SIZE_OF_INT;
-
     private final int checkInterval = 5_000;
     private long lastCheckInterval = -1;
-
-    private final Long2ObjectHashMap<String> appLabels = new Long2ObjectHashMap<>();
+    private final StatisticsService statistics = new StatisticsService();
 
     public MonitoringAgent() {
     }
@@ -48,46 +34,32 @@ public final class MonitoringAgent implements Agent {
             lastCheckInterval = timeNow;
             log.info("Reporting ...");
             if (!ensureCountersAreReady()) {
+                statistics.update();
                 log.info("Counters are not ready");
+                log.info("Monitoring state: {}", statistics.state());
                 return 0;
             }
 
             try (CncCounters cncCounters = CncCounters.open(new File(Aeron.Context.getAeronDirectoryName()))) {
-                CountersReader reader = cncCounters.countersReader();
-                reader.forEach((value, counterId, label) -> {
-                    long ownerId = reader.getCounterOwnerId(counterId);
-                    if (ApplicationCounters.APPLICATION_IDENTITY_TYPE_ID == reader.getCounterTypeId(counterId)) {
-                        log.info("Application Identity ownerId:label {}:{}", ownerId, label);
-                        appLabels.put(ownerId, label);
-                    }
-
-                    String appLabel = appLabels.getOrDefault(ownerId, "untracked-app");
-
-                    if (AeronCounters.DRIVER_SUBSCRIBER_POSITION_TYPE_ID == reader.getCounterTypeId(counterId)) {
-                        log.info("Driver subscriber position label:value {}:{}", appLabel, value);
-
-                        int keyOffset = CountersReader.metaDataOffset(counterId) + CountersReader.KEY_OFFSET;
-                        int sessionId = reader.metaDataBuffer().getInt(keyOffset + SESSION_ID_OFFSET);
-                        int streamId = reader.metaDataBuffer().getInt(keyOffset + STREAM_ID_OFFSET);
-                        String channel = reader.metaDataBuffer().getStringAscii(keyOffset + CHANNEL_OFFSET);
-
-                        log.info(
-                                "Subscriber position app={} channel={} streamId={} sessionId={} position={}",
-                                appLabel, channel, streamId, sessionId, value);
-                    }
-                });
+                final long nowMs = System.currentTimeMillis();
+                statistics.update(cncCounters.countersReader(), cncCounters.driverHeartbeatAgeMs(nowMs));
             } catch (Exception ex) {
+                statistics.update();
                 log.error("Error while trying to read counters", ex);
             }
+            log.info("Monitoring state: {}", statistics.state());
         }
         return 0;
     }
 
     public boolean ensureCountersAreReady() {
-        return CommonContext.isDriverActive(new File(Aeron.Context.getAeronDirectoryName()),
-                CommonContext.DRIVER_TIMEOUT_MS, value -> {
-                    log.info("Driver Info: {}", value);
-                });
+        try {
+            return CommonContext.isDriverActive(new File(Aeron.Context.getAeronDirectoryName()),
+                    CommonContext.DRIVER_TIMEOUT_MS, value -> log.info("Driver Info: {}", value));
+        } catch (RuntimeException ex) {
+            log.warn("Media Driver is unavailable: {}", ex.getMessage());
+            return false;
+        }
     }
 
     @Override

@@ -9,13 +9,15 @@
       "channel": "aeron:ipc",
       "streamId": 1001,
       "sessionId": 89789,
-      "publisher": {
-        "application": "pricing-engine-1",
-        "registrationId": 98789,
-        "ownerId": 78907,
-        "positionBytes": 1230,
-        "rateBytesPerSecond": 123.0
-      },
+      "positionBytes": 1230,
+      "rateBytesPerSecond": 123.0,
+      "publishers": [
+        {
+          "application": "pricing-engine-1",
+          "registrationId": 98789,
+          "ownerId": 78907
+        }
+      ],
       "subscribers": [
         {
           "application": "pricing-client-1",
