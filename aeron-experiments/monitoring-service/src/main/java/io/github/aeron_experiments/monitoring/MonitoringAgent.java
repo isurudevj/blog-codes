@@ -2,7 +2,6 @@ package io.github.aeron_experiments.monitoring;
 
 import io.aeron.Aeron;
 import io.aeron.AeronCounters;
-import io.aeron.CncFileDescriptor;
 import io.aeron.CommonContext;
 import io.github.aeron_experiments.common.ApplicationCounters;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +10,7 @@ import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.status.CountersReader;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicLong;
+import java.io.File;
 
 @Slf4j
 public final class MonitoringAgent implements Agent {
@@ -27,10 +23,6 @@ public final class MonitoringAgent implements Agent {
     private final int checkInterval = 5_000;
     private long lastCheckInterval = -1;
 
-    private CncCounters cncCounters;
-
-    private final Long2ObjectHashMap<String> appLabels = new Long2ObjectHashMap<>();
-
     public MonitoringAgent() {
     }
 
@@ -41,14 +33,12 @@ public final class MonitoringAgent implements Agent {
 
     @Override
     public void onClose() {
-        if (cncCounters != null) {
-            cncCounters.close();
-        }
         log.info("MonitoringAgent onClose");
     }
 
     @Override
     public int doWork() {
+        final Long2ObjectHashMap<String> appLabels = new Long2ObjectHashMap<>();
         long timeNow = System.currentTimeMillis();
         if (timeNow - lastCheckInterval > checkInterval) {
             lastCheckInterval = timeNow;
@@ -58,6 +48,7 @@ public final class MonitoringAgent implements Agent {
                 return 0;
             }
 
+            CncCounters cncCounters = CncCounters.open(new File(Aeron.Context.getAeronDirectoryName()));
             CountersReader reader = cncCounters.countersReader();
             reader.forEach((value, counterId, label) -> {
                 long ownerId = reader.getCounterOwnerId(counterId);
@@ -72,51 +63,16 @@ public final class MonitoringAgent implements Agent {
                     log.info("Driver subscriber position label:value {}:{}", appLabel, value);
                 }
             });
+            cncCounters.close();
         }
         return 0;
     }
 
     public boolean ensureCountersAreReady() {
-        Path cncFilePath = Paths.get(Aeron.Context.getAeronDirectoryName(), CncFileDescriptor.CNC_FILE);
-        if (!Files.exists(cncFilePath)) {
-            closeCounters();
-            return false;
-        }
-
-        try {
-            if (cncCounters == null) {
-                cncCounters = CncCounters.open(cncFilePath.getParent().toFile());
-            }
-
-            AtomicLong heartbeat = new AtomicLong(Long.MIN_VALUE);
-            CountersReader reader = cncCounters.countersReader();
-            reader.forEach((value, counterId, label) -> {
-                if (AeronCounters.DRIVER_HEARTBEAT_TYPE_ID == reader.getCounterTypeId(counterId)) {
-                    heartbeat.set(value);
-                }
-            });
-
-            long heartbeatAgeMs = System.currentTimeMillis() - heartbeat.get();
-            if (heartbeat.get() != Long.MIN_VALUE &&
-                    heartbeatAgeMs >= 0 && heartbeatAgeMs <= CommonContext.DRIVER_TIMEOUT_MS) {
-                return true;
-            }
-
-            log.warn("Media Driver heartbeat is unavailable or stale; reconnecting on the next check");
-        } catch (RuntimeException ex) {
-            log.warn("Media Driver counters are unavailable; reconnecting on the next check: {}", ex.getMessage());
-        }
-
-        closeCounters();
-        return false;
-    }
-
-    private void closeCounters() {
-        if (cncCounters != null) {
-            cncCounters.close();
-            cncCounters = null;
-            appLabels.clear();
-        }
+        return CommonContext.isDriverActive(new File(Aeron.Context.getAeronDirectoryName()),
+                CommonContext.DRIVER_TIMEOUT_MS, value -> {
+                    log.info("Driver Info: {}", value);
+                });
     }
 
     @Override
