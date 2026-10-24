@@ -6,6 +6,9 @@ import org.agrona.concurrent.Agent;
 @Slf4j
 public final class MonitoringAgent implements Agent {
 
+    private final int checkInterval = 5_000;
+    private long lastCheckInterval = -1;
+
     private final CncCounters cncCounters;
 
     public MonitoringAgent(CncCounters cncCounters) {
@@ -15,22 +18,27 @@ public final class MonitoringAgent implements Agent {
 
     @Override
     public void onStart() {
-        log.info("IpcMonitoringAgent onStart");
+        log.info("MonitoringAgent onStart");
     }
 
     @Override
     public void onClose() {
-        log.info("IpcMonitoringAgent onClose");
+        log.info("MonitoringAgent onClose");
     }
 
     @Override
     public int doWork() {
+        long timeNow = System.currentTimeMillis();
+        if (timeNow - lastCheckInterval > checkInterval) {
+            lastCheckInterval = timeNow;
+            log.info("Reporting ...");
+        }
         return 0;
     }
 
     @Override
     public String roleName() {
-        return "aeron-ipc-monitor";
+        return "aeron-monitor";
     }
 
 
