@@ -1,6 +1,8 @@
 package io.github.aeron_experiments.pricedistributor;
 
 import io.aeron.Aeron;
+import io.github.aeron_experiments.common.EnvInitializer;
+import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.BackoffIdleStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,36 +12,15 @@ import uk.co.real_logic.artio.library.LibraryConfiguration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 public final class PriceDistributorApplication {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PriceDistributorApplication.class);
-
-    private PriceDistributorApplication() {
-    }
 
     public static void main(final String[] args) {
-        final String aeronDirectory = env("AERON_DIR", Aeron.Context.getAeronDirectoryName());
-        final String libraryChannel = env("ARTIO_LIBRARY_CHANNEL", "aeron:ipc");
+        EnvInitializer.init();
         final PriceDistributorSessionHandler handler = new PriceDistributorSessionHandler();
         final LibraryConfiguration configuration = new LibraryConfiguration()
             .libraryName("price-distributor")
-            .libraryAeronChannels(List.of(libraryChannel))
+            .libraryAeronChannels(List.of(Aeron.Context.IPC_CHANNEL))
             .sessionAcquireHandler((session, acquiredInfo) -> handler);
-        configuration.aeronContext().aeronDirectoryName(aeronDirectory);
-
-        final AtomicBoolean running = new AtomicBoolean(true);
-        Runtime.getRuntime().addShutdownHook(
-            new Thread(() -> running.set(false), "price-distributor-shutdown"));
-        try (FixLibrary library = FixLibrary.connect(configuration)) {
-            LOGGER.info("Price distributor started: aeronDir={}, libraryChannel={}",
-                aeronDirectory, libraryChannel);
-            final BackoffIdleStrategy idleStrategy = new BackoffIdleStrategy();
-            while (running.get()) {
-                idleStrategy.idle(library.poll(10));
-            }
-        }
-    }
-
-    private static String env(final String name, final String defaultValue) {
-        return System.getenv().getOrDefault(name, defaultValue);
     }
 }
