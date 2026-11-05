@@ -1,12 +1,15 @@
 package io.github.aeron_experiments.fixengine;
 
-import io.github.aeron_experiments.artio_support.CustomEngineConfiguration;
 import io.github.aeron_experiments.artio_codecs.FixDictionaryImpl;
+import io.github.aeron_experiments.artio_support.CustomEngineConfiguration;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ShutdownUtils;
+import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.CloseHelper;
+import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.ShutdownSignalBarrier;
+import org.agrona.concurrent.SleepingIdleStrategy;
 import uk.co.real_logic.artio.engine.FixEngine;
 
 @Slf4j
@@ -25,7 +28,16 @@ public final class ArtioFixEngineApplication {
 
             ShutdownUtils.registerShutdownHook(barrier::signal);
 
+            AgentRunner pruneAgentRunner = new AgentRunner(new SleepingIdleStrategy(),
+                    throwable -> log.error("Error occurred", throwable),
+                    null,
+                    new ArchivePruningAgent(engine));
+
+            AgentRunner.startOnThread(pruneAgentRunner, ThreadFactoryUtils.createDemonThreadFactory());
+
+
             barrier.await();
+            CloseHelper.quietClose(pruneAgentRunner);
             CloseHelper.quietClose(engine);
         }
     }
