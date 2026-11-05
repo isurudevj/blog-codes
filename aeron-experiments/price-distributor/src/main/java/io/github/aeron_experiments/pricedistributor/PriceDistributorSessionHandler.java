@@ -1,4 +1,4 @@
-package io.github.aeron_experiments.streamingpricing;
+package io.github.aeron_experiments.pricedistributor;
 
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
 import org.agrona.DirectBuffer;
@@ -14,8 +14,8 @@ import uk.co.real_logic.artio.messages.DisconnectReason;
 import uk.co.real_logic.artio.session.Session;
 import uk.co.real_logic.artio.util.MutableAsciiBuffer;
 
-final class StreamingPricingSessionHandler implements SessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamingPricingSessionHandler.class);
+final class PriceDistributorSessionHandler implements SessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PriceDistributorSessionHandler.class);
     private static final long BID_PRICE = 18_950L;
     private static final long OFFER_PRICE = 18_955L;
     private static final int PRICE_SCALE = 2;

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(':fix-files')
+    implementation project(':protocol-definitions')
     implementation "org.quickfixj:quickfixj-core:${quickfixjVersion}"
     implementation "org.quickfixj:quickfixj-messages-fix44:${quickfixjVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"

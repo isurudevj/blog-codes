@@ -10,11 +10,10 @@ Multi-module Gradle project for Aeron experiments and monitoring examples.
 - `pricing-client` - Pricing consumer/client application
 - `monitoring-service` - Aeron metrics collection and monitoring service
 - `docker-stacks` - Docker Compose and configuration for Grafana and Prometheus
-- `sbe-files` - SBE message schemas and related files
-- `fix-files` - Golden-source FIX dictionaries shared by Artio and QuickFIX/J
+- `protocol-definitions` - Golden-source FIX dictionaries and SBE schemas
 - `aeron-archive-service` - Standalone Aeron Archive connected to the Media Driver
 - `artio-fix-engine` - Artio FIX 4.4 acceptor with inbound/outbound archive logging
-- `streaming-pricing-service` - Artio library handling market-data subscriptions
+- `price-distributor` - Artio library distributing prices over FIX market-data sessions
 - `qfj-price-client` - QuickFIX/J initiator requesting and receiving streaming prices
 
 ## Requirements
@@ -47,7 +46,7 @@ During development, the application can also be run with:
 ./gradlew :monitoring-service:run
 ```
 
-## FIX streaming-prices example
+## FIX price-distribution example
 
 The FIX example is split along Artio's engine/library boundary. Start the four
 processes in this order (the existing Media Driver is also required):
@@ -56,7 +55,7 @@ processes in this order (the existing Media Driver is also required):
 ./gradlew :media-driver:run
 ./gradlew :aeron-archive-service:run
 ./gradlew :artio-fix-engine:run
-./gradlew :streaming-pricing-service:run
+./gradlew :price-distributor:run
 ./gradlew :qfj-price-client:run
 ```
 

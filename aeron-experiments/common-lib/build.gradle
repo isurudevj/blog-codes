@@ -3,7 +3,8 @@ plugins {
 }
 
 def generatedSbeDir = layout.buildDirectory.dir('generated/sources/sbe/java')
-def marketDataSchema = project(':sbe-files').layout.projectDirectory.file('src/main/resources/market-data.xml')
+def marketDataSchema = project(':protocol-definitions').layout.projectDirectory.file(
+    'src/main/resources/sbe/market-data.xml')
 
 configurations {
     sbeTool

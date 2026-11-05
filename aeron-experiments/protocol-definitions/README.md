@@ -1,6 +1,16 @@
-# Market Data SBE Schema
+# Protocol Definitions
 
-`src/main/resources/market-data.xml` defines an `OrderBookSnapshot` message.
+This module is the golden source for protocol definitions shared by the
+applications in this repository:
+
+- `src/main/resources/fix/FIX44.xml` is the FIX 4.4 dictionary used by the
+  Artio FIX engine, Artio price distributor, and QuickFIX/J client.
+- `src/main/resources/sbe/market-data.xml` is the SBE market-data schema used
+  to generate codecs in `common-lib`.
+
+## Market Data SBE Schema
+
+`src/main/resources/sbe/market-data.xml` defines an `OrderBookSnapshot` message.
 The symbol belongs to the snapshot and is encoded once outside the repeating
 order-book group. Each group entry represents the bid and ask at the same book
 depth:
@@ -52,8 +62,8 @@ common-lib/build/generated/sources/sbe/java
 
 The directory is registered as a `common-lib` main Java source directory, and
 `compileJava` automatically runs codec generation first. Generated files stay
-under `build` and should not be committed; edit `market-data.xml` and regenerate
-instead.
+under `build` and should not be committed; edit
+`src/main/resources/sbe/market-data.xml` and regenerate instead.
 
 ## Codec benchmarks
 

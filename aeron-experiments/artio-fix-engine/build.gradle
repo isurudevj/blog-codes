@@ -3,7 +3,8 @@ plugins {
 }
 
 def generatedFixDir = layout.buildDirectory.dir('generated/sources/fix/java')
-def fixDictionary = project(':fix-files').layout.projectDirectory.file('src/main/resources/FIX44.xml')
+def fixDictionary = project(':protocol-definitions').layout.projectDirectory.file(
+    'src/main/resources/fix/FIX44.xml')
 
 dependencies {
     implementation "uk.co.real-logic:artio-core:${artioVersion}"
