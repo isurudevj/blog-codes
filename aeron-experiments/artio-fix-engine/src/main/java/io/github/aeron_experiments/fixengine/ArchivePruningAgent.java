@@ -34,7 +34,6 @@ final class ArchivePruningAgent implements Agent {
         }
 
         if (pendingPrune.isExecuting()) {
-            log.info("Pruning is executing.");
             return 0;
         }
 
