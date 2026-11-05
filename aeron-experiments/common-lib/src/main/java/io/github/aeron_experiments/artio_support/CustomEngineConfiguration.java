@@ -58,7 +58,6 @@ public final class CustomEngineConfiguration {
             .logFileDir(logFileDir)
             .logInboundMessages(logInboundMessages)
             .logOutboundMessages(logOutboundMessages)
-            .initialAcceptedSessionOwner(InitialAcceptedSessionOwner.SOLE_LIBRARY)
             .acceptorfixDictionary(FixDictionaryImpl.class);
         configuration.aeronContext().aeronDirectoryName(aeronDirectoryName);
         configuration.aeronArchiveContext()

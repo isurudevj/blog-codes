@@ -1,26 +1,30 @@
 package io.github.aeron_experiments.pricedistributor;
 
-import io.aeron.Aeron;
+import io.github.aeron_experiments.common.AgentConfig;
 import io.github.aeron_experiments.common.EnvInitializer;
+import io.github.aeron_experiments.common.ShutdownUtils;
+import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.agrona.concurrent.BackoffIdleStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.co.real_logic.artio.library.FixLibrary;
-import uk.co.real_logic.artio.library.LibraryConfiguration;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import org.agrona.CloseHelper;
+import org.agrona.concurrent.AgentRunner;
+import org.agrona.concurrent.ShutdownSignalBarrier;
 
 @Slf4j
 public final class PriceDistributorApplication {
 
     public static void main(final String[] args) {
         EnvInitializer.init();
-        final PriceDistributorSessionHandler handler = new PriceDistributorSessionHandler();
-        final LibraryConfiguration configuration = new LibraryConfiguration()
-            .libraryName("price-distributor")
-            .libraryAeronChannels(List.of(Aeron.Context.IPC_CHANNEL))
-            .sessionAcquireHandler((session, acquiredInfo) -> handler);
+        try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier()) {
+            AgentRunner agentRunner = new AgentRunner(AgentConfig.idleStrategy(),
+                    throwable -> log.error("Error occurred", throwable),
+                    null,
+                    new LibraryHandlerAgent());
+            AgentRunner.startOnThread(agentRunner, ThreadFactoryUtils.createDemonThreadFactory(""));
+
+            ShutdownUtils.registerShutdownHook(barrier::signal);
+            log.info("Price distributor started");
+            barrier.await();
+            CloseHelper.quietClose(agentRunner);
+        }
     }
 }
