@@ -21,7 +21,7 @@ public class LibraryHandlerAgent implements Agent {
         configuration.sessionExistsHandler(handler);
         configuration.libraryConnectHandler(handler);
         configuration.gatewayErrorHandler(new LibErrorHandler());
-        configuration.threadFactory(ThreadFactoryUtils.createUnnamedDemonThreadFactory(true));
+        configuration.threadFactory(ThreadFactoryUtils.createDemonThreadFactory());
         configuration.libraryAeronChannels(List.of(Aeron.Context.IPC_CHANNEL));
 
 

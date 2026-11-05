@@ -19,7 +19,7 @@ public final class PriceDistributorApplication {
                     throwable -> log.error("Error occurred", throwable),
                     null,
                     new LibraryHandlerAgent());
-            AgentRunner.startOnThread(agentRunner, ThreadFactoryUtils.createDemonThreadFactory(""));
+            AgentRunner.startOnThread(agentRunner, ThreadFactoryUtils.createDemonThreadFactory());
 
             ShutdownUtils.registerShutdownHook(barrier::signal);
             log.info("Price distributor started");

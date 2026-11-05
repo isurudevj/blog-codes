@@ -9,12 +9,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @UtilityClass
 public class ThreadFactoryUtils {
 
-    public static ThreadFactory createDemonThreadFactory(final String prefix) {
-        return createThreadFactory(prefix, true);
+    public static ThreadFactory createDemonThreadFactory() {
+        return createThreadFactory("unnamed", true);
     }
 
-    public static ThreadFactory createUnnamedDemonThreadFactory(boolean isDaemon) {
-        return createThreadFactory("unnamed", isDaemon);
+    public static ThreadFactory createDemonThreadFactory(final String prefix) {
+        return createThreadFactory(prefix, true);
     }
 
     public static ThreadFactory createThreadFactory(final String prefix, final boolean isDaemon) {
