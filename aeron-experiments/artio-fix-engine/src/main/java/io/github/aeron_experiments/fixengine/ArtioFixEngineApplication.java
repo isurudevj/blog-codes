@@ -24,16 +24,20 @@ public final class ArtioFixEngineApplication {
             log.info("Artio FIX engine started: bind={}:{}, aeronDir={}, archiveLogging=true, logDir={}",
                     configuration.bindToHost(), configuration.bindToPort(),
                     configuration.aeronDirectoryName(), configuration.logFileDir());
-            log.info("Continuous archive pruning enabled={}", configuration.archivePruningEnabled());
+            log.info("Archive pruning enabled={}, intervalMs={}", configuration.archivePruningEnabled(),
+                    configuration.archivePruningIntervalMs());
 
             ShutdownUtils.registerShutdownHook(barrier::signal);
 
-            AgentRunner pruneAgentRunner = new AgentRunner(new SleepingIdleStrategy(),
-                    throwable -> log.error("Error occurred", throwable),
-                    null,
-                    new ArchivePruningAgent(engine));
+            AgentRunner pruneAgentRunner = null;
+            if (configuration.archivePruningEnabled()) {
+                pruneAgentRunner = new AgentRunner(new SleepingIdleStrategy(),
+                        throwable -> log.error("Error occurred", throwable),
+                        null,
+                        new ArchivePruningAgent(engine, configuration.archivePruningIntervalMs()));
 
-            AgentRunner.startOnThread(pruneAgentRunner, ThreadFactoryUtils.createDemonThreadFactory());
+                AgentRunner.startOnThread(pruneAgentRunner, ThreadFactoryUtils.createDemonThreadFactory());
+            }
 
 
             barrier.await();

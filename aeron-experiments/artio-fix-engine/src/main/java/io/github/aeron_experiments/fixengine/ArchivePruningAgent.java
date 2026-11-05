@@ -1,45 +1,57 @@
 package io.github.aeron_experiments.fixengine;
 
+import lombok.extern.slf4j.Slf4j;
 import org.agrona.collections.Long2LongHashMap;
 import org.agrona.concurrent.Agent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.engine.FixEngine;
 
+import java.util.concurrent.TimeUnit;
+
+@Slf4j
 final class ArchivePruningAgent implements Agent {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ArchivePruningAgent.class);
 
     private final FixEngine engine;
+    private final long pruneIntervalNs;
     private Reply<Long2LongHashMap> pendingPrune;
+    private long nextPruneTimeNs;
 
-    ArchivePruningAgent(final FixEngine engine) {
+    ArchivePruningAgent(final FixEngine engine, final long pruneIntervalMs) {
         this.engine = engine;
+        pruneIntervalNs = TimeUnit.MILLISECONDS.toNanos(pruneIntervalMs);
     }
 
     @Override
     public int doWork() {
+        if (System.nanoTime() < nextPruneTimeNs) {
+            return 0;
+        }
+
         if (pendingPrune == null) {
+            log.info("Commencing prune operation");
             pendingPrune = engine.pruneArchive(null);
             return pendingPrune == null ? 0 : 1;
         }
 
         if (pendingPrune.isExecuting()) {
+            log.info("Pruning is executing.");
             return 0;
         }
 
         if (pendingPrune.hasCompleted()) {
+            log.info("Pruning has completed.");
             final Long2LongHashMap prunedPositions = pendingPrune.resultIfPresent();
             if (prunedPositions != null && !prunedPositions.isEmpty()) {
-                LOGGER.info("Artio archive pruned: recordingPositions={}", prunedPositions);
+                log.info("Artio archive pruned: recordingPositions={}", prunedPositions);
             }
         } else if (pendingPrune.hasErrored()) {
-            LOGGER.error("Artio archive prune failed", pendingPrune.error());
+            log.error("Artio archive prune failed", pendingPrune.error());
         } else {
-            LOGGER.warn("Artio archive prune timed out: state={}", pendingPrune.state());
+            log.warn("Artio archive prune timed out: state={}", pendingPrune.state());
         }
 
         pendingPrune = null;
+        nextPruneTimeNs = System.nanoTime() + pruneIntervalNs;
         return 1;
     }
 

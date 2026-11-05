@@ -19,6 +19,7 @@ public final class CustomEngineConfiguration {
     public static final String ARCHIVE_RECORDING_EVENTS_CHANNEL_PROP =
         "artio.archive.recording.events.channel";
     public static final String ARCHIVE_PRUNING_ENABLED_PROP = "artio.archive.pruning.enabled";
+    public static final String ARCHIVE_PRUNING_INTERVAL_MS_PROP = "artio.archive.pruning.interval.ms";
 
     private static final String DEFAULT_AERON_CHANNEL = "aeron:ipc";
 
@@ -33,6 +34,7 @@ public final class CustomEngineConfiguration {
     private final String archiveControlResponseChannel;
     private final String archiveRecordingEventsChannel;
     private final boolean archivePruningEnabled;
+    private final long archivePruningIntervalMs;
 
     public CustomEngineConfiguration() {
         bindToHost = System.getProperty(BIND_HOST_PROP, "0.0.0.0");
@@ -49,6 +51,11 @@ public final class CustomEngineConfiguration {
         archiveRecordingEventsChannel = System.getProperty(
             ARCHIVE_RECORDING_EVENTS_CHANNEL_PROP, DEFAULT_AERON_CHANNEL);
         archivePruningEnabled = booleanProperty(ARCHIVE_PRUNING_ENABLED_PROP, true);
+        archivePruningIntervalMs = Long.getLong(ARCHIVE_PRUNING_INTERVAL_MS_PROP, 60_000L);
+        if (archivePruningIntervalMs <= 0) {
+            throw new IllegalArgumentException(
+                ARCHIVE_PRUNING_INTERVAL_MS_PROP + " must be greater than zero");
+        }
     }
 
     public EngineConfiguration engineConfiguration(
@@ -87,6 +94,10 @@ public final class CustomEngineConfiguration {
 
     public boolean archivePruningEnabled() {
         return archivePruningEnabled;
+    }
+
+    public long archivePruningIntervalMs() {
+        return archivePruningIntervalMs;
     }
 
     private static boolean booleanProperty(final String name, final boolean defaultValue) {
