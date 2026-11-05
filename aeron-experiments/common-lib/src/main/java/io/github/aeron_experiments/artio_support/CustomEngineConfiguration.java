@@ -1,4 +1,4 @@
-package io.github.aeron_experiments.fixengine;
+package io.github.aeron_experiments.artio_support;
 
 import io.aeron.Aeron;
 import uk.co.real_logic.artio.FixDictionaryImpl;

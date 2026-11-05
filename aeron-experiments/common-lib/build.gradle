@@ -14,6 +14,8 @@ dependencies {
     api "org.agrona:agrona:${agronaVersion}"
     api "io.aeron:aeron-client:${aeronVersion}"
     api "io.aeron:aeron-archive:${aeronVersion}"
+    api "uk.co.real-logic:artio-core:${artioVersion}"
+    api "uk.co.real-logic:artio-session-codecs:${artioVersion}"
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     sbeTool "uk.co.real-logic:sbe-tool:${sbeVersion}"

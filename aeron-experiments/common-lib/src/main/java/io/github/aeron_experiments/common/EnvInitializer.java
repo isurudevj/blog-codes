@@ -2,6 +2,7 @@ package io.github.aeron_experiments.common;
 
 import io.aeron.Aeron;
 import io.aeron.archive.Archive;
+import io.github.aeron_experiments.artio_support.CustomEngineConfiguration;
 
 import java.io.File;
 import java.util.Map;
@@ -21,6 +22,8 @@ public final class EnvInitializer {
                     Aeron.Context.AERON_DIR_PROP_DEFAULT + "-" + aeronMdGroupId);
             System.setProperty(Archive.Configuration.ARCHIVE_DIR_PROP_NAME,
                     archiveDefaultDir() + "-" + aeronMdGroupId);
+            System.setProperty(CustomEngineConfiguration.LOG_FILE_DIR_PROP,
+                    artioLogDefaultDir() + "-" + aeronMdGroupId);
         }
 
         envs.forEach((envKey, envValue) -> {
@@ -36,5 +39,9 @@ public final class EnvInitializer {
 
     private static String archiveDefaultDir() {
         return System.getenv("user.home") + File.separator + "aeron-archive";
+    }
+
+    private static String artioLogDefaultDir() {
+        return System.getenv("user.home") + File.separator + "artio-logging";
     }
 }
