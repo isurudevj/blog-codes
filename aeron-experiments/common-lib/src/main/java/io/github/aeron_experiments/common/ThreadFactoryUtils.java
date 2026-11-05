@@ -13,7 +13,11 @@ public class ThreadFactoryUtils {
         return createThreadFactory(prefix, true);
     }
 
-    public static ThreadFactory createThreadFactory(final String prefix, final boolean isDeamon) {
+    public static ThreadFactory createUnnamedDemonThreadFactory(boolean isDaemon) {
+        return createThreadFactory("unnamed", isDaemon);
+    }
+
+    public static ThreadFactory createThreadFactory(final String prefix, final boolean isDaemon) {
         final String validatedPrefix = Objects.requireNonNull(prefix, "prefix").trim();
         if (validatedPrefix.isEmpty()) {
             throw new IllegalArgumentException("prefix must not be blank");
@@ -24,7 +28,7 @@ public class ThreadFactoryUtils {
             final Thread thread = new Thread(
                 Objects.requireNonNull(runnable, "runnable"),
                 validatedPrefix + "-" + threadNumber.getAndIncrement());
-            thread.setDaemon(isDeamon);
+            thread.setDaemon(isDaemon);
             return thread;
         };
     }
