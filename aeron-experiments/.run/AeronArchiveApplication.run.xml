@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="AeronArchiveApplication" type="Application" factoryName="Application" nameIsGenerated="true">
+    <envs>
+      <env name="AERON_ARCHIVE_CONTROL_CHANNEL" value="aeron:udp?endpoint=localhost:8010" />
+      <env name="AERON_ARCHIVE_PRINT_CONFIGURATION" value="true" />
+      <env name="AERON_ARCHIVE_REPLICATION_CHANNEL" value="aeron:udp?endpoint=localhost:0" />
+      <env name="JAVA_OPTS" value="-Xms2048m -Xmx2048m" />
+      <env name="PERF_AERON_MD_GROUP_ID" value="md-1" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="io.github.aeron_experiments.aeronarchive.AeronArchiveApplication" />
+    <module name="aeron-experiments.aeron-archive.main" />
+    <option name="VM_PARAMETERS" value="--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="io.github.aeron_experiments.aeronarchive.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
