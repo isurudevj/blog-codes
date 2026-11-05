@@ -30,9 +30,7 @@ public class LibraryHandlerAgent implements Agent {
 
     @Override
     public int doWork() throws Exception {
-        if (fixLibrary.isConnected()) {
-            fixLibrary.poll(10);
-        }
+        fixLibrary.poll(10);
         return 0;
     }
 
