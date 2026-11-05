@@ -11,7 +11,7 @@ Multi-module Gradle project for Aeron experiments and monitoring examples.
 - `monitoring-service` - Aeron metrics collection and monitoring service
 - `docker-stacks` - Docker Compose and configuration for Grafana and Prometheus
 - `protocol-definitions` - Golden-source FIX dictionaries and SBE schemas
-- `aeron-archive-service` - Standalone Aeron Archive connected to the Media Driver
+- `aeron-archive` - Standalone Aeron Archive connected to the Media Driver
 - `artio-fix-engine` - Artio FIX 4.4 acceptor with inbound/outbound archive logging
 - `price-distributor` - Artio library distributing prices over FIX market-data sessions
 - `qfj-price-client` - QuickFIX/J initiator requesting and receiving streaming prices
@@ -53,7 +53,7 @@ processes in this order (the existing Media Driver is also required):
 
 ```shell
 ./gradlew :media-driver:run
-./gradlew :aeron-archive-service:run
+./gradlew :aeron-archive:run
 ./gradlew :artio-fix-engine:run
 ./gradlew :price-distributor:run
 ./gradlew :qfj-price-client:run
@@ -71,7 +71,9 @@ Configuration is available through environment variables:
 | Variable | Default | Used by |
 | --- | --- | --- |
 | `AERON_DIR` | Aeron's default directory | archive, engine, pricing service |
-| `AERON_ARCHIVE_DIR` | `data/archive` | archive |
+| `AERON_ARCHIVE_DIR` | Aeron's archive default | archive |
+| `AERON_ARCHIVE_CONTROL_CHANNEL` | Required | archive |
+| `AERON_ARCHIVE_REPLICATION_CHANNEL` | Required | archive |
 | `ARTIO_LOG_DIR` | `data/artio` | engine |
 | `ARTIO_ARCHIVE_PRUNING_ENABLED` | `true` | engine |
 | `ARTIO_LIBRARY_CHANNEL` | `aeron:ipc` | engine, pricing service |

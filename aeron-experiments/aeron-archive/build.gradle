@@ -3,13 +3,14 @@ plugins {
 }
 
 dependencies {
+    implementation project(':common-lib')
     implementation "io.aeron:aeron-archive:${aeronVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
 }
 
 application {
-    mainClass = 'io.github.aeron_experiments.archive.ArchiveServiceApplication'
+    mainClass = 'io.github.aeron_experiments.aeronarchive.AeronArchiveApplication'
     applicationDefaultJvmArgs = ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED']
 }
 

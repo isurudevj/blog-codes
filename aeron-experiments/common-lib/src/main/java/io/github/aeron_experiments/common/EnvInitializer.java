@@ -1,5 +1,7 @@
 package io.github.aeron_experiments.common;
 
+import io.aeron.Aeron;
+
 import java.util.Map;
 
 public final class EnvInitializer {
@@ -18,6 +20,13 @@ public final class EnvInitializer {
      */
     public static void init() {
         Map<String, String> envs = System.getenv();
+
+        String aeronMdGroupId = System.getenv("PERF_AERON_MD_GROUP_ID");
+        if (aeronMdGroupId != null) {
+            System.setProperty(Aeron.Context.AERON_DIR_PROP_NAME,
+                    Aeron.Context.AERON_DIR_PROP_DEFAULT + "-" + aeronMdGroupId);
+        }
+
         envs.forEach((envKey, envValue) -> {
             if (envKey.startsWith(ENV_PREFIX)) {
                 System.getProperties().putIfAbsent(envKey.toLowerCase().replace("_", "."), envValue);
