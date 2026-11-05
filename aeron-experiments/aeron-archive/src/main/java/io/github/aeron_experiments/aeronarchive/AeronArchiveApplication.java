@@ -2,29 +2,23 @@ package io.github.aeron_experiments.aeronarchive;
 
 import io.aeron.archive.Archive;
 import io.github.aeron_experiments.common.EnvInitializer;
+import lombok.extern.slf4j.Slf4j;
+import org.agrona.CloseHelper;
 import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public final class AeronArchiveApplication {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AeronArchiveApplication.class);
-    private static final String PRINT_CONFIGURATION_PROPERTY = "aeron.archive.print.configuration";
-
-    private AeronArchiveApplication() {
-    }
 
     public static void main(final String[] args) {
         EnvInitializer.init();
-        final Archive.Context context = new Archive.Context();
-        if (Boolean.getBoolean(PRINT_CONFIGURATION_PROPERTY)) {
-            LOGGER.info("Aeron Archive configuration: {}", context);
-        }
 
-        try (Archive archive = Archive.launch(context);
-             ShutdownSignalBarrier barrier = new ShutdownSignalBarrier()) {
-            LOGGER.info("Aeron Archive started: aeronDir={}, archiveDir={}",
-                context.aeronDirectoryName(), context.archiveDir().getAbsolutePath());
+        try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier()) {
+            final Archive.Context context = new Archive.Context();
+            Archive archive = Archive.launch(context);
+            log.info("AeronArchive started \n{}", context);
             barrier.await();
+
+            CloseHelper.quietClose(archive);
         }
     }
 }
