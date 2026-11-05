@@ -1,7 +1,7 @@
 package io.github.aeron_experiments.artio_support;
 
 import io.aeron.Aeron;
-import uk.co.real_logic.artio.FixDictionaryImpl;
+import uk.co.real_logic.artio.dictionary.FixDictionary;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.messages.InitialAcceptedSessionOwner;
 
@@ -51,14 +51,15 @@ public final class CustomEngineConfiguration {
         archivePruningEnabled = booleanProperty(ARCHIVE_PRUNING_ENABLED_PROP, true);
     }
 
-    public EngineConfiguration engineConfiguration() {
+    public EngineConfiguration engineConfiguration(
+        final Class<? extends FixDictionary> acceptorFixDictionary) {
         final EngineConfiguration configuration = new EngineConfiguration()
             .bindTo(bindToHost, bindToPort)
             .libraryAeronChannel(libraryAeronChannel)
             .logFileDir(logFileDir)
             .logInboundMessages(logInboundMessages)
             .logOutboundMessages(logOutboundMessages)
-            .acceptorfixDictionary(FixDictionaryImpl.class);
+            .acceptorfixDictionary(acceptorFixDictionary);
         configuration.aeronContext().aeronDirectoryName(aeronDirectoryName);
         configuration.aeronArchiveContext()
             .aeronDirectoryName(aeronDirectoryName)

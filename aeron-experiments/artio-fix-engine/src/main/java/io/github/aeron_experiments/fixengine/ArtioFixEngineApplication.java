@@ -1,6 +1,7 @@
 package io.github.aeron_experiments.fixengine;
 
 import io.github.aeron_experiments.artio_support.CustomEngineConfiguration;
+import io.github.aeron_experiments.artio_codecs.FixDictionaryImpl;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ShutdownUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public final class ArtioFixEngineApplication {
             EnvInitializer.init();
             final CustomEngineConfiguration configuration = new CustomEngineConfiguration();
 
-            FixEngine engine = FixEngine.launch(configuration.engineConfiguration());
+            FixEngine engine = FixEngine.launch(configuration.engineConfiguration(FixDictionaryImpl.class));
             log.info("Artio FIX engine started: bind={}:{}, aeronDir={}, archiveLogging=true, logDir={}",
                     configuration.bindToHost(), configuration.bindToPort(),
                     configuration.aeronDirectoryName(), configuration.logFileDir());
