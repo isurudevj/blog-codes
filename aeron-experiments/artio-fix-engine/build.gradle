@@ -7,8 +7,10 @@ def fixDictionary = project(':protocol-definitions').layout.projectDirectory.fil
     'src/main/resources/fix/FIX44.xml')
 
 dependencies {
+    implementation project(':common-lib')
     implementation "uk.co.real-logic:artio-core:${artioVersion}"
     implementation "uk.co.real-logic:artio-session-codecs:${artioVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
 }

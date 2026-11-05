@@ -6,19 +6,11 @@ import io.aeron.archive.Archive;
 import java.util.Map;
 
 public final class EnvInitializer {
-    private static final String ENV_PREFIX = "AERON_";
+    private static final String[] ENV_PREFIXES = {"AERON_", "ARTIO_", "PERF_"};
 
     private EnvInitializer() {
     }
 
-    /**
-     * Copies {@code AERON_*} environment variables to Aeron system properties.
-     * Existing system properties are not overwritten, allowing explicit
-     * {@code -D} arguments to take precedence over environment variables.
-     *
-     * <p>For example, {@code AERON_CONDUCTOR_IDLE_STRATEGY} becomes
-     * {@code aeron.conductor.idle.strategy}.</p>
-     */
     public static void init() {
         Map<String, String> envs = System.getenv();
 
@@ -31,8 +23,11 @@ public final class EnvInitializer {
         }
 
         envs.forEach((envKey, envValue) -> {
-            if (envKey.startsWith(ENV_PREFIX)) {
-                System.getProperties().putIfAbsent(envKey.toLowerCase().replace("_", "."), envValue);
+            for (String prefix : ENV_PREFIXES) {
+                if (envKey.startsWith(prefix)) {
+                    System.getProperties()
+                            .putIfAbsent(envKey.toLowerCase().replace("_", "."), envValue);
+                }
             }
         });
     }

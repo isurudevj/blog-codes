@@ -74,12 +74,25 @@ Configuration is available through environment variables:
 | `AERON_ARCHIVE_DIR` | Aeron's archive default | archive |
 | `AERON_ARCHIVE_CONTROL_CHANNEL` | Required | archive |
 | `AERON_ARCHIVE_REPLICATION_CHANNEL` | Required | archive |
-| `ARTIO_LOG_DIR` | `data/artio` | engine |
-| `ARTIO_ARCHIVE_PRUNING_ENABLED` | `true` | engine |
-| `ARTIO_LIBRARY_CHANNEL` | `aeron:ipc` | engine, pricing service |
-| `FIX_ACCEPTOR_HOST` | `0.0.0.0` | engine |
-| `FIX_ACCEPTOR_PORT` | `9876` | engine |
 | `PRICE_SYMBOL` | `AAPL` | QuickFIX/J client |
+
+The Artio engine uses system properties through `CustomEngineConfiguration`:
+
+| Property | Default |
+| --- | --- |
+| `artio.bind.host` | `0.0.0.0` |
+| `artio.bind.port` | `9876` |
+| `artio.library.aeron.channel` | `aeron:ipc` |
+| `artio.log.file.dir` | `data/artio` |
+| `artio.log.inbound.messages` | `true` |
+| `artio.log.outbound.messages` | `true` |
+| `artio.archive.control.request.channel` | `aeron:ipc` |
+| `artio.archive.control.response.channel` | `aeron:ipc` |
+| `artio.archive.recording.events.channel` | `aeron:ipc` |
+| `artio.archive.pruning.enabled` | `true` |
+
+Pass these with `-D`, or include them in the deployment `JAVA_OPTS`, for
+example `JAVA_OPTS="-Dartio.bind.port=9877"`.
 
 The QuickFIX/J connection settings are in
 `qfj-price-client/src/main/resources/quickfixj-client.cfg`. If the host or port
@@ -91,7 +104,7 @@ prunes Aeron Archive segments older than the latest sequence index. It submits
 the next asynchronous prune immediately after the previous one completes, so
 eligible segments are reclaimed without waiting for an engine restart.
 Current-sequence messages remain available for resend. Set
-`ARTIO_ARCHIVE_PRUNING_ENABLED=false` to disable the agent.
+`-Dartio.archive.pruning.enabled=false` to disable the agent.
 
 The Pricing Engine publishes a reusable 10-level `OrderBookSnapshot` as fast as
 the Aeron publication accepts it. The Pricing Client decodes each message into
