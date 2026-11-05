@@ -74,6 +74,7 @@ Configuration is available through environment variables:
 | `AERON_DIR` | Aeron's default directory | archive, engine, pricing service |
 | `AERON_ARCHIVE_DIR` | `data/archive` | archive |
 | `ARTIO_LOG_DIR` | `data/artio` | engine |
+| `ARTIO_ARCHIVE_PRUNING_ENABLED` | `true` | engine |
 | `ARTIO_LIBRARY_CHANNEL` | `aeron:ipc` | engine, pricing service |
 | `FIX_ACCEPTOR_HOST` | `0.0.0.0` | engine |
 | `FIX_ACCEPTOR_PORT` | `9876` | engine |
@@ -83,6 +84,13 @@ The QuickFIX/J connection settings are in
 `qfj-price-client/src/main/resources/quickfixj-client.cfg`. If the host or port
 is changed on the engine, update the corresponding `SocketConnectHost` or
 `SocketConnectPort` setting there.
+
+The FIX engine runs a dedicated busy-spinning Agrona agent that continuously
+prunes Aeron Archive segments older than the latest sequence index. It submits
+the next asynchronous prune immediately after the previous one completes, so
+eligible segments are reclaimed without waiting for an engine restart.
+Current-sequence messages remain available for resend. Set
+`ARTIO_ARCHIVE_PRUNING_ENABLED=false` to disable the agent.
 
 The Pricing Engine publishes a reusable 10-level `OrderBookSnapshot` as fast as
 the Aeron publication accepts it. The Pricing Client decodes each message into
