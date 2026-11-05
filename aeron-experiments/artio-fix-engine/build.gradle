@@ -33,13 +33,21 @@ tasks.named('compileJava') {
 
 application {
     mainClass = 'io.github.aeron_experiments.fixengine.ArtioFixEngineApplication'
-    applicationDefaultJvmArgs = ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED']
+    applicationDefaultJvmArgs = [
+        '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED'
+    ]
 }
 
 tasks.named('jar') {
     dependsOn configurations.runtimeClasspath
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    manifest { attributes('Main-Class': application.mainClass.get(), 'Add-Opens': 'java.base/jdk.internal.misc') }
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass.get(),
+            'Add-Opens': 'java.base/jdk.internal.misc java.base/sun.nio.ch'
+        )
+    }
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
