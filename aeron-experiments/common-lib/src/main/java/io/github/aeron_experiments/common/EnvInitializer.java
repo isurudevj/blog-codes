@@ -38,10 +38,10 @@ public final class EnvInitializer {
 
 
     private static String archiveDefaultDir() {
-        return System.getenv("user.home") + File.separator + "aeron-archive";
+        return System.getProperty("user.home") + File.separator + "aeron-archive";
     }
 
     private static String artioLogDefaultDir() {
-        return System.getenv("user.home") + File.separator + "artio-logging";
+        return System.getProperty("user.home") + File.separator + "artio-logging";
     }
 }
