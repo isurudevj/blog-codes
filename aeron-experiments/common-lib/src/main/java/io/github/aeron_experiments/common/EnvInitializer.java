@@ -3,6 +3,7 @@ package io.github.aeron_experiments.common;
 import io.aeron.Aeron;
 import io.aeron.archive.Archive;
 
+import java.io.File;
 import java.util.Map;
 
 public final class EnvInitializer {
@@ -19,7 +20,7 @@ public final class EnvInitializer {
             System.setProperty(Aeron.Context.AERON_DIR_PROP_NAME,
                     Aeron.Context.AERON_DIR_PROP_DEFAULT + "-" + aeronMdGroupId);
             System.setProperty(Archive.Configuration.ARCHIVE_DIR_PROP_NAME,
-                    Archive.Configuration.ARCHIVE_DIR_DEFAULT + "-" + aeronMdGroupId);
+                    archiveDefaultDir() + "-" + aeronMdGroupId);
         }
 
         envs.forEach((envKey, envValue) -> {
@@ -30,5 +31,10 @@ public final class EnvInitializer {
                 }
             }
         });
+    }
+
+
+    private static String archiveDefaultDir() {
+        return System.getenv("user.home") + File.separator + "aeron-archive";
     }
 }
