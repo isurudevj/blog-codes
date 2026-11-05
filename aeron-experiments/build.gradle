@@ -3,10 +3,12 @@ plugins {
 }
 
 ext {
-    aeronVersion = '1.51.0'
-    agronaVersion = '2.4.1'
+    aeronVersion = '1.49.3'
+    artioVersion = '0.173'
+    quickfixjVersion = '3.0.2'
+    agronaVersion = '2.3.0'
     jmhVersion = '1.37'
-    sbeVersion = '1.38.1'
+    sbeVersion = '1.36.0'
     lombokVersion = '1.18.48'
     slf4jVersion = '2.0.20'
     logbackVersion = '1.6.4'

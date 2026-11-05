@@ -1,0 +1,23 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':fix-files')
+    implementation "org.quickfixj:quickfixj-core:${quickfixjVersion}"
+    implementation "org.quickfixj:quickfixj-messages-fix44:${quickfixjVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
+}
+
+application {
+    mainClass = 'io.github.aeron_experiments.qfjclient.QfjPriceClientApplication'
+}
+
+tasks.named('jar') {
+    dependsOn configurations.runtimeClasspath
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes('Main-Class': application.mainClass.get()) }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}

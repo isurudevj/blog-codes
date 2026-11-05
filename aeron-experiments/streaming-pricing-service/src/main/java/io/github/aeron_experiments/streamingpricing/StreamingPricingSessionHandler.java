@@ -1,0 +1,91 @@
+package io.github.aeron_experiments.streamingpricing;
+
+import io.aeron.logbuffer.ControlledFragmentHandler.Action;
+import org.agrona.DirectBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.co.real_logic.artio.MDEntryType;
+import uk.co.real_logic.artio.builder.MarketDataSnapshotFullRefreshEncoder;
+import uk.co.real_logic.artio.builder.MarketDataSnapshotFullRefreshEncoder.MDEntriesGroupEncoder;
+import uk.co.real_logic.artio.decoder.MarketDataRequestDecoder;
+import uk.co.real_logic.artio.library.OnMessageInfo;
+import uk.co.real_logic.artio.library.SessionHandler;
+import uk.co.real_logic.artio.messages.DisconnectReason;
+import uk.co.real_logic.artio.session.Session;
+import uk.co.real_logic.artio.util.MutableAsciiBuffer;
+
+final class StreamingPricingSessionHandler implements SessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamingPricingSessionHandler.class);
+    private static final long BID_PRICE = 18_950L;
+    private static final long OFFER_PRICE = 18_955L;
+    private static final int PRICE_SCALE = 2;
+    private final MarketDataRequestDecoder request = new MarketDataRequestDecoder();
+    private final MarketDataSnapshotFullRefreshEncoder snapshot = new MarketDataSnapshotFullRefreshEncoder();
+    private final MutableAsciiBuffer asciiBuffer = new MutableAsciiBuffer();
+
+    @Override
+    public Action onMessage(
+        final DirectBuffer buffer,
+        final int offset,
+        final int length,
+        final int libraryId,
+        final Session session,
+        final int sequenceIndex,
+        final long messageType,
+        final long timestampInNs,
+        final long position,
+        final OnMessageInfo messageInfo) {
+        if (messageType != MarketDataRequestDecoder.MESSAGE_TYPE) {
+            return Action.CONTINUE;
+        }
+
+        asciiBuffer.wrap(buffer);
+        request.decode(asciiBuffer, offset, length);
+        if (!request.validate() || !request.hasNoRelatedSymGroupCounter()
+            || request.noRelatedSymGroupCounter() == 0) {
+            LOGGER.warn("Ignoring invalid MarketDataRequest: invalidTag={}, rejectReason={}",
+                request.invalidTagId(), request.rejectReason());
+            request.reset();
+            return Action.CONTINUE;
+        }
+
+        final MarketDataRequestDecoder.RelatedSymGroupDecoder symbolGroup =
+            request.relatedSymGroupIterator().next();
+        final String symbol = new String(symbolGroup.symbol(), 0, symbolGroup.symbolLength());
+        final String requestId = request.mDReqIDAsString();
+        snapshot.reset();
+        snapshot.mDReqID(requestId);
+        snapshot.instrument().symbol(symbol);
+        MDEntriesGroupEncoder entry = snapshot.mDEntriesGroup(2);
+        entry.mDEntryType(MDEntryType.BID).mDEntryPx(BID_PRICE, PRICE_SCALE).mDEntrySize(100, 0);
+        entry = entry.next();
+        entry.mDEntryType(MDEntryType.OFFER).mDEntryPx(OFFER_PRICE, PRICE_SCALE).mDEntrySize(120, 0);
+
+        final long result = session.trySend(snapshot);
+        LOGGER.info("MarketDataRequest: requestId={}, symbol={}, snapshotPosition={}",
+            requestId, symbol, result);
+        request.reset();
+        return result < 0 ? Action.ABORT : Action.CONTINUE;
+    }
+
+    @Override
+    public void onTimeout(final int libraryId, final Session session) {
+        LOGGER.warn("FIX session timed out: {}", session.compositeKey());
+    }
+
+    @Override
+    public void onSlowStatus(final int libraryId, final Session session, final boolean hasBecomeSlow) {
+        LOGGER.warn("FIX session slow status changed: session={}, slow={}", session.compositeKey(), hasBecomeSlow);
+    }
+
+    @Override
+    public Action onDisconnect(final int libraryId, final Session session, final DisconnectReason reason) {
+        LOGGER.info("FIX session disconnected: session={}, reason={}", session.compositeKey(), reason);
+        return Action.CONTINUE;
+    }
+
+    @Override
+    public void onSessionStart(final Session session) {
+        LOGGER.info("FIX session active: {}", session.compositeKey());
+    }
+}

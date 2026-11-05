@@ -11,6 +11,11 @@ Multi-module Gradle project for Aeron experiments and monitoring examples.
 - `monitoring-service` - Aeron metrics collection and monitoring service
 - `docker-stacks` - Docker Compose and configuration for Grafana and Prometheus
 - `sbe-files` - SBE message schemas and related files
+- `fix-files` - Golden-source FIX dictionaries shared by Artio and QuickFIX/J
+- `aeron-archive-service` - Standalone Aeron Archive connected to the Media Driver
+- `artio-fix-engine` - Artio FIX 4.4 acceptor with inbound/outbound archive logging
+- `streaming-pricing-service` - Artio library handling market-data subscriptions
+- `qfj-price-client` - QuickFIX/J initiator requesting and receiving streaming prices
 
 ## Requirements
 
@@ -41,6 +46,43 @@ During development, the application can also be run with:
 ./gradlew :pricing-client:run
 ./gradlew :monitoring-service:run
 ```
+
+## FIX streaming-prices example
+
+The FIX example is split along Artio's engine/library boundary. Start the four
+processes in this order (the existing Media Driver is also required):
+
+```shell
+./gradlew :media-driver:run
+./gradlew :aeron-archive-service:run
+./gradlew :artio-fix-engine:run
+./gradlew :streaming-pricing-service:run
+./gradlew :qfj-price-client:run
+```
+
+The QuickFIX/J client logs on as `QFJ_PRICE_CLIENT`, sends a FIX 4.4
+`MarketDataRequest (V)` for `AAPL`, and receives a two-sided
+`MarketDataSnapshotFullRefresh (W)`. Set `PRICE_SYMBOL` to request another
+symbol. Artio records both inbound and outbound FIX streams in Aeron Archive;
+its replay indexes and engine state are stored under `data/artio`, while archive
+recordings are stored under `data/archive`.
+
+Configuration is available through environment variables:
+
+| Variable | Default | Used by |
+| --- | --- | --- |
+| `AERON_DIR` | Aeron's default directory | archive, engine, pricing service |
+| `AERON_ARCHIVE_DIR` | `data/archive` | archive |
+| `ARTIO_LOG_DIR` | `data/artio` | engine |
+| `ARTIO_LIBRARY_CHANNEL` | `aeron:ipc` | engine, pricing service |
+| `FIX_ACCEPTOR_HOST` | `0.0.0.0` | engine |
+| `FIX_ACCEPTOR_PORT` | `9876` | engine |
+| `PRICE_SYMBOL` | `AAPL` | QuickFIX/J client |
+
+The QuickFIX/J connection settings are in
+`qfj-price-client/src/main/resources/quickfixj-client.cfg`. If the host or port
+is changed on the engine, update the corresponding `SocketConnectHost` or
+`SocketConnectPort` setting there.
 
 The Pricing Engine publishes a reusable 10-level `OrderBookSnapshot` as fast as
 the Aeron publication accepts it. The Pricing Client decodes each message into

@@ -1,0 +1,22 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation "io.aeron:aeron-archive:${aeronVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
+}
+
+application {
+    mainClass = 'io.github.aeron_experiments.archive.ArchiveServiceApplication'
+    applicationDefaultJvmArgs = ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED']
+}
+
+tasks.named('jar') {
+    dependsOn configurations.runtimeClasspath
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes('Main-Class': application.mainClass.get(), 'Add-Opens': 'java.base/jdk.internal.misc') }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}

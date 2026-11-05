@@ -1,0 +1,41 @@
+plugins {
+    id 'application'
+}
+
+def generatedFixDir = layout.buildDirectory.dir('generated/sources/fix/java')
+def fixDictionary = project(':fix-files').layout.projectDirectory.file('src/main/resources/FIX44.xml')
+
+dependencies {
+    implementation "uk.co.real-logic:artio-core:${artioVersion}"
+    implementation "uk.co.real-logic:artio-session-codecs:${artioVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    runtimeOnly "ch.qos.logback:logback-classic:${logbackVersion}"
+}
+
+sourceSets.main.java.srcDir generatedFixDir
+
+tasks.register('generateFixCodecs', JavaExec) {
+    inputs.file fixDictionary
+    outputs.dir generatedFixDir
+    classpath = configurations.compileClasspath
+    mainClass = 'uk.co.real_logic.artio.dictionary.CodecGenerationTool'
+    jvmArgs '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
+    args generatedFixDir.get().asFile.absolutePath, fixDictionary.asFile.absolutePath
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('generateFixCodecs')
+}
+
+application {
+    mainClass = 'io.github.aeron_experiments.streamingpricing.StreamingPricingApplication'
+    applicationDefaultJvmArgs = ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED']
+}
+
+tasks.named('jar') {
+    dependsOn configurations.runtimeClasspath
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes('Main-Class': application.mainClass.get(), 'Add-Opens': 'java.base/jdk.internal.misc') }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
