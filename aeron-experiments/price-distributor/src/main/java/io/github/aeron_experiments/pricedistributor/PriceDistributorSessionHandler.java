@@ -108,6 +108,7 @@ final class PriceDistributorSessionHandler implements SessionHandler, SessionExi
     public void onSessionExists(FixLibrary library, long surrogateSessionId, String localCompId, String localSubId,
                                 String localLocationId, String remoteCompId, String remoteSubId, String remoteLocationId,
                                 int logonReceivedSequenceNumber, int logonSequenceIndex) {
+        log.info("New session found {} -> {}", localCompId, remoteCompId);
         final Reply<SessionReplyStatus> reply = library.requestSession(
                 surrogateSessionId,
                 logonReceivedSequenceNumber,
