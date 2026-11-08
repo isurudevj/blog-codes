@@ -12,8 +12,11 @@ readonly VERSION="${DEPLOY_VERSION:-1.0.0-SNAPSHOT}"
 
 readonly -a SERVICES=(
     media-driver
+    artio-fix-engine
     pricing-engine
     pricing-client
+    price-distributor
+    qfj-price-client
     monitoring-service
 )
 

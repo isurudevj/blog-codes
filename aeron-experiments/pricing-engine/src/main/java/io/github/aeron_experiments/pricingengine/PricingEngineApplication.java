@@ -20,6 +20,7 @@ public final class PricingEngineApplication {
         final String channel = Config.pricingChannel();
         final int streamId = Config.pricingStreamId();
         final String applicationName = Config.applicationName();
+        final int messagesPerSecond = Config.messagesPerSecond();
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
             AeronFactory aeronFactory = AeronFactory.initialize(applicationName)) {
@@ -28,11 +29,11 @@ public final class PricingEngineApplication {
                 AgentConfig.idleStrategy(),
                 throwable -> log.error("Pricing Engine agent failed", throwable),
                 null,
-                new PricingEngineAgent(publication))) {
+                new PricingEngineAgent(publication, messagesPerSecond))) {
                 AgentRunner.startOnThread(
                     runner, ThreadFactoryUtils.createDemonThreadFactory(applicationName + "-agent"));
-                log.info("Pricing Engine started: appName={}, channel={}, streamId={}",
-                    applicationName, channel, streamId);
+                log.info("Pricing Engine started: appName={}, channel={}, streamId={}, messagesPerSecond={}",
+                    applicationName, channel, streamId, messagesPerSecond);
                 barrier.await();
                 log.info("Shutting down Pricing Engine");
             }

@@ -1,6 +1,7 @@
 package io.github.aeron_experiments.pricedistributor;
 
 import io.aeron.Aeron;
+import io.aeron.Subscription;
 import io.github.aeron_experiments.common.ThreadFactoryUtils;
 import org.agrona.CloseHelper;
 import org.agrona.concurrent.Agent;
@@ -12,10 +13,16 @@ import java.util.List;
 public class LibraryHandlerAgent implements Agent {
 
     private FixLibrary fixLibrary;
+    private final Subscription pricingSubscription;
+    private PriceDistributorSessionHandler handler;
+
+    LibraryHandlerAgent(final Subscription pricingSubscription) {
+        this.pricingSubscription = pricingSubscription;
+    }
 
     @Override
     public void onStart() {
-        PriceDistributorSessionHandler handler = new PriceDistributorSessionHandler();
+        handler = new PriceDistributorSessionHandler(pricingSubscription);
         LibraryConfiguration configuration = new LibraryConfiguration();
         configuration.sessionAcquireHandler(handler);
         configuration.sessionExistsHandler(handler);
@@ -30,8 +37,7 @@ public class LibraryHandlerAgent implements Agent {
 
     @Override
     public int doWork() throws Exception {
-        fixLibrary.poll(10);
-        return 0;
+        return fixLibrary.poll(10) + handler.pollPricing();
     }
 
     @Override

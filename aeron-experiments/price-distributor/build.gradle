@@ -9,6 +9,7 @@ def fixDictionary = project(':protocol-definitions').layout.projectDirectory.fil
 
 dependencies {
     implementation project(':common-lib')
+    implementation "io.aeron:aeron-client:${aeronVersion}"
     implementation "uk.co.real-logic:artio-core:${artioVersion}"
     implementation "uk.co.real-logic:artio-session-codecs:${artioVersion}"
     compileOnly "org.projectlombok:lombok:${lombokVersion}"

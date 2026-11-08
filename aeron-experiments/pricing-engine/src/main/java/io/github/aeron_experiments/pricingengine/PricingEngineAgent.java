@@ -16,9 +16,13 @@ final class PricingEngineAgent implements Agent {
     private final OrderBookSnapshot snapshot = new OrderBookSnapshot();
     private final OrderBookSnapshotCodec codec = new OrderBookSnapshotCodec();
     private final UnsafeBuffer buffer = new UnsafeBuffer(ByteBuffer.allocateDirect(BUFFER_CAPACITY));
+    private final long publishIntervalNs;
+    private long nextPublishNs;
 
-    PricingEngineAgent(final Publication publication) {
+    PricingEngineAgent(final Publication publication, final int messagesPerSecond) {
         this.publication = publication;
+        this.publishIntervalNs = 1_000_000_000L / messagesPerSecond;
+        this.nextPublishNs = System.nanoTime();
         initialiseSnapshot();
     }
 
@@ -27,9 +31,22 @@ final class PricingEngineAgent implements Agent {
     }
 
     public int doWork() {
-        snapshot.setSentTimestamp(System.nanoTime());
+        final long nowNs = System.nanoTime();
+        if (nowNs < nextPublishNs) {
+            return 0;
+        }
+
+        snapshot.setSentTimestamp(nowNs);
         final int encodedLength = codec.encode(snapshot, buffer, 0);
-        return publication.offer(buffer, 0, encodedLength) > 0 ? 1 : 0;
+        if (publication.offer(buffer, 0, encodedLength) <= 0) {
+            return 0;
+        }
+
+        nextPublishNs += publishIntervalNs;
+        if (nextPublishNs <= nowNs) {
+            nextPublishNs = nowNs + publishIntervalNs;
+        }
+        return 1;
     }
 
     private void initialiseSnapshot() {
