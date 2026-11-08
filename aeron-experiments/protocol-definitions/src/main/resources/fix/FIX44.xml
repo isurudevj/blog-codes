@@ -766,6 +766,7 @@
   <message name="MarketDataSnapshotFullRefresh" msgtype="W" msgcat="app">
     <field name="MDReqID" required="N"/>
     <component name="Instrument" required="Y"/>
+    <field name="SourceSentTimeNs" required="Y"/>
     <group name="NoUnderlyings" required="N">
       <component name="UnderlyingInstrument" required="N"/>
     </group>
@@ -6816,5 +6817,6 @@
     <field number="954" name="Nested3PartySubIDType" type="INT"/>
     <field number="955" name="LegContractSettlMonth" type="MONTHYEAR"/>
     <field number="956" name="LegInterestAccrualDate" type="LOCALMKTDATE"/>
+    <field number="9001" name="SourceSentTimeNs" type="LONG"/>
   </fields>
 </fix>

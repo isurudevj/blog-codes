@@ -176,6 +176,7 @@ final class PriceDistributorSessionHandler implements SessionHandler, SessionExi
         snapshot.reset();
         snapshot.mDReqID(requestId);
         snapshot.instrument().symbol(orderBook.getSymbol(), orderBook.getSymbolLength());
+        snapshot.sourceSentTimeNs(orderBook.getSentTimestamp());
 
         final int levelCount = orderBook.getOrderBookLength();
         MarketDataSnapshotFullRefreshEncoder.MDEntriesGroupEncoder entries =

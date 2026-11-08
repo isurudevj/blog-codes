@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.agrona.CloseHelper;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.Agent;
+import org.HdrHistogram.Histogram;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
@@ -30,10 +31,14 @@ import java.util.List;
 @Slf4j
 final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcquireHandler, LibraryConnectHandler {
     private static final long REPORT_INTERVAL_NS = 1_000_000_000L;
+    private static final long MAX_TRACKABLE_LATENCY_NS = 60_000_000_000L;
+    private static final int LATENCY_SIGNIFICANT_DIGITS = 3;
 
     private final MarketDataRequestEncoder request = new MarketDataRequestEncoder();
     private final MarketDataSnapshotFullRefreshDecoder snapshot = new MarketDataSnapshotFullRefreshDecoder();
     private final MutableAsciiBuffer asciiBuffer = new MutableAsciiBuffer();
+    private final Histogram intervalLatency = new Histogram(
+        1, MAX_TRACKABLE_LATENCY_NS, LATENCY_SIGNIFICANT_DIGITS);
     private FixLibrary library;
     private Reply<Session> initiateReply;
     private long reportStartNs = System.nanoTime();
@@ -113,6 +118,13 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
         if (messageType == MarketDataSnapshotFullRefreshDecoder.MESSAGE_TYPE) {
             asciiBuffer.wrap(buffer);
             snapshot.decode(asciiBuffer, offset, length);
+            final long latencyNs = System.nanoTime() - snapshot.sourceSentTimeNs();
+            if (latencyNs >= 0 && latencyNs <= MAX_TRACKABLE_LATENCY_NS) {
+                intervalLatency.recordValue(latencyNs);
+            } else {
+                log.warn("Latency outside histogram range: latencyNs={}, sourceSentTimeNs={}",
+                    latencyNs, snapshot.sourceSentTimeNs());
+            }
             intervalMessages++;
             totalMessages++;
         }
@@ -123,10 +135,24 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
         final long nowNs = System.nanoTime();
         final long elapsedNs = nowNs - reportStartNs;
         if (elapsedNs >= REPORT_INTERVAL_NS) {
-            log.info("FIX price rate={} msg/s, totalMessages={}",
-                intervalMessages * REPORT_INTERVAL_NS / elapsedNs, totalMessages);
+            final long messagesPerSecond = intervalMessages * REPORT_INTERVAL_NS / elapsedNs;
+            if (intervalLatency.getTotalCount() == 0) {
+                log.info("FIX price rate={} msg/s, latencySamples=0, totalMessages={}",
+                    messagesPerSecond, totalMessages);
+            } else {
+                log.info(
+                    "FIX price rate={} msg/s, latencyP99={} ns, latencyP99.9={} ns, " +
+                        "latencyP100={} ns, latencySamples={}, totalMessages={}",
+                    messagesPerSecond,
+                    intervalLatency.getValueAtPercentile(99.0),
+                    intervalLatency.getValueAtPercentile(99.9),
+                    intervalLatency.getMaxValue(),
+                    intervalLatency.getTotalCount(),
+                    totalMessages);
+            }
             reportStartNs = nowNs;
             intervalMessages = 0;
+            intervalLatency.reset();
         }
     }
 
