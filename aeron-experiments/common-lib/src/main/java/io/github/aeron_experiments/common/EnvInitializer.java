@@ -20,10 +20,14 @@ public final class EnvInitializer {
         if (aeronMdGroupId != null) {
             System.setProperty(Aeron.Context.AERON_DIR_PROP_NAME,
                     Aeron.Context.AERON_DIR_PROP_DEFAULT + "-" + aeronMdGroupId);
-            System.setProperty(Archive.Configuration.ARCHIVE_DIR_PROP_NAME,
-                    archiveDefaultDir() + "-" + aeronMdGroupId);
-            System.setProperty(CustomEngineConfiguration.LOG_FILE_DIR_PROP,
-                    artioLogDefaultDir() + "-" + aeronMdGroupId);
+            if (!envs.containsKey("AERON_ARCHIVE_DIR")) {
+                System.setProperty(Archive.Configuration.ARCHIVE_DIR_PROP_NAME,
+                        archiveDefaultDir() + "-" + aeronMdGroupId);
+            }
+            if (!envs.containsKey("ARTIO_LOG_FILE_DIR")) {
+                System.setProperty(CustomEngineConfiguration.LOG_FILE_DIR_PROP,
+                        artioLogDefaultDir() + "-" + aeronMdGroupId);
+            }
         }
 
         envs.forEach((envKey, envValue) -> {

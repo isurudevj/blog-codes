@@ -1,6 +1,7 @@
 package io.github.aeron_experiments.artio_support;
 
 import io.aeron.Aeron;
+import io.github.aeron_experiments.common.AgentConfig;
 import uk.co.real_logic.artio.dictionary.FixDictionary;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.messages.InitialAcceptedSessionOwner;
@@ -66,6 +67,9 @@ public final class CustomEngineConfiguration {
             .logFileDir(logFileDir)
             .logInboundMessages(logInboundMessages)
             .logOutboundMessages(logOutboundMessages)
+            .framerIdleStrategy(AgentConfig.idleStrategy())
+            .archiverIdleStrategy(AgentConfig.idleStrategy())
+            .monitoringThreadIdleStrategy(AgentConfig.idleStrategy())
             .acceptorfixDictionary(acceptorFixDictionary);
         configuration.aeronContext().aeronDirectoryName(aeronDirectoryName);
         configuration.aeronArchiveContext()
