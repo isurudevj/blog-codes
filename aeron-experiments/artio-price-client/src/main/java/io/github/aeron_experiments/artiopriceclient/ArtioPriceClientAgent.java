@@ -33,6 +33,7 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
     private static final long REPORT_INTERVAL_NS = 1_000_000_000L;
     private static final long MAX_TRACKABLE_LATENCY_NS = 60_000_000_000L;
     private static final int LATENCY_SIGNIFICANT_DIGITS = 3;
+    private static final double NANOSECONDS_PER_MICROSECOND = 1_000.0;
 
     private final MarketDataRequestEncoder request = new MarketDataRequestEncoder();
     private final MarketDataSnapshotFullRefreshDecoder snapshot = new MarketDataSnapshotFullRefreshDecoder();
@@ -141,12 +142,12 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
                     messagesPerSecond, totalMessages);
             } else {
                 log.info(
-                    "FIX price rate={} msg/s, latencyP99={} ns, latencyP99.9={} ns, " +
-                        "latencyP100={} ns, latencySamples={}, totalMessages={}",
+                    "FIX price rate={} msg/s, latencyP99Us={}, latencyP99.9Us={}, " +
+                        "latencyP100Us={}, latencySamples={}, totalMessages={}",
                     messagesPerSecond,
-                    intervalLatency.getValueAtPercentile(99.0),
-                    intervalLatency.getValueAtPercentile(99.9),
-                    intervalLatency.getMaxValue(),
+                    intervalLatency.getValueAtPercentile(99.0) / NANOSECONDS_PER_MICROSECOND,
+                    intervalLatency.getValueAtPercentile(99.9) / NANOSECONDS_PER_MICROSECOND,
+                    intervalLatency.getMaxValue() / NANOSECONDS_PER_MICROSECOND,
                     intervalLatency.getTotalCount(),
                     totalMessages);
             }
