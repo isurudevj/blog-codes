@@ -1,9 +1,7 @@
 package io.github.aeron_experiments.pricedistributor;
 
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
-import io.github.aeron_experiments.artio_codecs.MDEntryType;
 import io.github.aeron_experiments.artio_codecs.builder.MarketDataSnapshotFullRefreshEncoder;
-import io.github.aeron_experiments.artio_codecs.builder.MarketDataSnapshotFullRefreshEncoder.MDEntriesGroupEncoder;
 import io.github.aeron_experiments.artio_codecs.decoder.MarketDataRequestDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.DirectBuffer;
@@ -43,37 +41,8 @@ final class PriceDistributorSessionHandler implements SessionHandler, SessionExi
             final long timestampInNs,
             final long position,
             final OnMessageInfo messageInfo) {
-        if (messageType != MarketDataRequestDecoder.MESSAGE_TYPE) {
-            return Action.CONTINUE;
-        }
 
-        asciiBuffer.wrap(buffer);
-        request.decode(asciiBuffer, offset, length);
-        if (!request.validate() || !request.hasNoRelatedSymGroupCounter()
-                || request.noRelatedSymGroupCounter() == 0) {
-            log.warn("Ignoring invalid MarketDataRequest: invalidTag={}, rejectReason={}",
-                    request.invalidTagId(), request.rejectReason());
-            request.reset();
-            return Action.CONTINUE;
-        }
-
-        final MarketDataRequestDecoder.RelatedSymGroupDecoder symbolGroup =
-                request.relatedSymGroupIterator().next();
-        final String symbol = new String(symbolGroup.symbol(), 0, symbolGroup.symbolLength());
-        final String requestId = request.mDReqIDAsString();
-        snapshot.reset();
-        snapshot.mDReqID(requestId);
-        snapshot.instrument().symbol(symbol);
-        MDEntriesGroupEncoder entry = snapshot.mDEntriesGroup(2);
-        entry.mDEntryType(MDEntryType.BID).mDEntryPx(BID_PRICE, PRICE_SCALE).mDEntrySize(100, 0);
-        entry = entry.next();
-        entry.mDEntryType(MDEntryType.OFFER).mDEntryPx(OFFER_PRICE, PRICE_SCALE).mDEntrySize(120, 0);
-
-        final long result = session.trySend(snapshot);
-        log.info("MarketDataRequest: requestId={}, symbol={}, snapshotPosition={}",
-                requestId, symbol, result);
-        request.reset();
-        return result < 0 ? Action.ABORT : Action.CONTINUE;
+        return Action.CONTINUE;
     }
 
     @Override
