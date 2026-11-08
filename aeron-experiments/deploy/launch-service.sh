@@ -58,5 +58,20 @@ fi
 
 read -r -a java_opts_args <<< "${java_opts}"
 
-echo "Starting ${app_instance}: jar=${jar_file}, log=${log_file}, cpu_affinity_mask=${cpu_affinity_mask}, java_opts=${java_opts}"
-exec taskset "${cpu_affinity_mask}" java "${java_opts_args[@]}" -DLOG_FILE="${log_file}" -jar "${jar_file}"
+launch_command=(java "${java_opts_args[@]}" -DLOG_FILE="${log_file}" -jar "${jar_file}")
+
+if [[ "${service_name}" == "artio-fix-engine" ]]; then
+    if ! command -v onload >/dev/null 2>&1; then
+        echo "OpenOnload is required for ${app_instance}, but the onload command is not available" >&2
+        exit 69
+    fi
+
+    launch_command=(onload "${launch_command[@]}")
+fi
+
+printf 'Starting %s: jar=%s, log=%s, cpu_affinity_mask=%s, command=' \
+    "${app_instance}" "${jar_file}" "${log_file}" "${cpu_affinity_mask}"
+printf ' %q' taskset "${cpu_affinity_mask}" "${launch_command[@]}"
+printf '\n'
+
+exec taskset "${cpu_affinity_mask}" "${launch_command[@]}"
