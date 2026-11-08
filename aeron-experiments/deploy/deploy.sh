@@ -12,7 +12,9 @@ readonly VERSION="${DEPLOY_VERSION:-1.0.0-SNAPSHOT}"
 
 readonly -a SERVICES=(
     media-driver
+    aeron-archive
     artio-fix-engine
+    artio-price-client
     pricing-engine
     pricing-client
     price-distributor
