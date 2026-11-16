@@ -50,6 +50,7 @@ done
 
 install -m 0755 "${SCRIPT_DIR}/launch-service.sh" "${local_stage}/bundle/deploy/launch-service.sh"
 install -m 0755 "${SCRIPT_DIR}/app.sh" "${local_stage}/bundle/deploy/app.sh"
+install -m 0755 "${SCRIPT_DIR}/demo-script.sh" "${local_stage}/bundle/deploy/demo-script.sh"
 install -m 0755 "${PROJECT_DIR}/common-lib/build/distributions/microbenchmark/microbenchmark.sh" \
     "${local_stage}/bundle/microbenchmark/microbenchmark.sh"
 install -m 0644 "${PROJECT_DIR}/common-lib/build/distributions/microbenchmark/jmh.jar" \
@@ -106,6 +107,7 @@ sudo install -d -o aeron -g aeron -m 0755 "${apps_dir}/logs" "${apps_dir}/data"
 sudo install -m 0644 "${stage}/bundle/apps/"*.jar "${apps_dir}/"
 sudo install -m 0755 "${stage}/bundle/deploy/launch-service.sh" "${apps_dir}/deploy/launch-service.sh"
 sudo install -m 0755 "${stage}/bundle/deploy/app.sh" "${apps_dir}/deploy/app.sh"
+sudo install -m 0755 "${stage}/bundle/deploy/demo-script.sh" "${apps_dir}/deploy/demo-script.sh"
 sudo install -m 0755 "${stage}/bundle/microbenchmark/microbenchmark.sh" \
     "${apps_dir}/microbenchmark/microbenchmark.sh"
 sudo install -m 0644 "${stage}/bundle/microbenchmark/jmh.jar" \
