@@ -61,7 +61,7 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
     public int doWork() {
         final int work = library.poll(10);
         if (initiateReply != null && !initiateReply.isExecuting() && !initiateReply.hasCompleted()) {
-            log.error("Unable to initiate FIX session: state={}, error={}",
+            log.error("Unable to initiate FIX session: state={}",
                 initiateReply.state(), initiateReply.error());
             initiateReply = null;
         }
