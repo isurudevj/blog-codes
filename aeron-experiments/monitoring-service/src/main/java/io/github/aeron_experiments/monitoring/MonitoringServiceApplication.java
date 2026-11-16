@@ -1,6 +1,5 @@
 package io.github.aeron_experiments.monitoring;
 
-import io.aeron.Aeron;
 import io.github.aeron_experiments.common.EnvInitializer;
 import io.github.aeron_experiments.common.ShutdownUtils;
 import io.github.aeron_experiments.common.ThreadFactoryUtils;
@@ -8,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SleepingIdleStrategy;
-
-import java.nio.file.Paths;
 
 @Slf4j
 public class MonitoringServiceApplication {

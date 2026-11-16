@@ -11,7 +11,6 @@ import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.status.CountersReader;
 
 import java.io.File;
-import java.util.Collections;
 
 @Slf4j
 public final class MonitoringAgent implements Agent {
