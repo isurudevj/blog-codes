@@ -142,9 +142,8 @@ final class ArtioPriceClientAgent implements Agent, SessionHandler, SessionAcqui
                     messagesPerSecond, totalMessages);
             } else {
                 log.info(
-                    "FIX price rate={} msg/s, latencyP99Us={}, latencyP99.9Us={}, " +
+                    "FIX price latencyP99Us={}, latencyP99.9Us={}, " +
                         "latencyP100Us={}, latencySamples={}, totalMessages={}",
-                    messagesPerSecond,
                     intervalLatency.getValueAtPercentile(99.0) / NANOSECONDS_PER_MICROSECOND,
                     intervalLatency.getValueAtPercentile(99.9) / NANOSECONDS_PER_MICROSECOND,
                     intervalLatency.getMaxValue() / NANOSECONDS_PER_MICROSECOND,
